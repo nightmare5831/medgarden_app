@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../../store/useAppStore';
 import { useEffect, useMemo } from 'react';
-import FABMenu from '../../components/FABMenu';
+import { router } from 'expo-router';
 
 const GOLDEN_RATIO = 0.618;
 
@@ -84,7 +84,12 @@ export default function CatalogScreen() {
 
   const handleFilterClick = (filterId: string, filterType?: string) => {
     if (filterType === 'action') {
-      // Handle action clicks (wallet, profile)
+      // Handle action clicks (forum, profile)
+      if (filterId === 'forum') {
+        router.push('/(tabs)/forum');
+      } else if (filterId === 'profile') {
+        router.push('/(tabs)/profile');
+      }
       return;
     }
     selectFilter(filterId);
@@ -93,8 +98,8 @@ export default function CatalogScreen() {
   // Dynamic left 4 icons (change based on filter selection)
   const leftIcons = currentFilterSet.slice(0, 4);
 
-  // Always fixed: Wallet and Profile on right
-  const walletIcon = { id: 'wallet', name: 'Carteira', icon: 'wallet', type: 'action' };
+  // Always fixed: Forum and Profile on right
+  const forumIcon = { id: 'forum', name: 'Fórum', icon: 'chatbubbles-outline', type: 'action' };
   const profileIcon = { id: 'profile', name: 'Perfil', icon: 'person', type: 'action' };
 
   return (
@@ -244,18 +249,18 @@ export default function CatalogScreen() {
 
             <View style={styles.verticalDivider} />
 
-            {/* RIGHT SECTION - 40% (ALWAYS FIXED: Wallet + Profile) */}
+            {/* RIGHT SECTION - 40% (ALWAYS FIXED: Forum + Profile) */}
             <View style={styles.rightSection}>
 
-              {/* Wallet - Always on top */}
+              {/* Forum - Always on top */}
               <TouchableOpacity
-                style={styles.walletCell}
-                onPress={() => handleFilterClick(walletIcon.id, walletIcon.type)}
+                style={styles.forumCell}
+                onPress={() => handleFilterClick(forumIcon.id, forumIcon.type)}
               >
-                <View style={styles.walletIconWide}>
-                  <Ionicons name="wallet-outline" size={42} color="#ffffff" />
+                <View style={styles.forumIconWide}>
+                  <Ionicons name="chatbubbles-outline" size={42} color="#ffffff" />
                 </View>
-                <Text style={styles.filterLabelAlt}>Carteira</Text>
+                <Text style={styles.filterLabelAlt}>Fórum</Text>
               </TouchableOpacity>
 
               <View style={styles.horizontalDivider} />
@@ -324,16 +329,16 @@ export default function CatalogScreen() {
 
             <View style={styles.verticalDivider} />
 
-            {/* RIGHT SECTION - Wallet & Profile still visible */}
+            {/* RIGHT SECTION - Forum & Profile still visible */}
             <View style={styles.rightSection}>
               <TouchableOpacity
-                style={styles.walletCell}
-                onPress={() => handleFilterClick(walletIcon.id, walletIcon.type)}
+                style={styles.forumCell}
+                onPress={() => handleFilterClick(forumIcon.id, forumIcon.type)}
               >
-                <View style={styles.walletIconWide}>
-                  <Ionicons name="wallet-outline" size={42} color="#ffffff" />
+                <View style={styles.forumIconWide}>
+                  <Ionicons name="chatbubbles-outline" size={42} color="#ffffff" />
                 </View>
-                <Text style={styles.filterLabelAlt}>Carteira</Text>
+                <Text style={styles.filterLabelAlt}>Fórum</Text>
               </TouchableOpacity>
 
               <View style={styles.horizontalDivider} />
@@ -362,9 +367,6 @@ export default function CatalogScreen() {
           />
         </TouchableOpacity>
       </View>
-
-      {/* FAB Menu - Forum and Logout */}
-      <FABMenu mode="main" />
 
     </View>
   );
@@ -537,7 +539,7 @@ const styles = StyleSheet.create({
   rightSection: {
     flex: 0.4,
   },
-  walletCell: {
+  forumCell: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -546,15 +548,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     paddingHorizontal: 8,
   },
-  walletIconWide: {
-    backgroundColor: '#f97316',
+  forumIconWide: {
+    backgroundColor: '#10b981',
     alignSelf: 'stretch',
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 6,
     paddingVertical: 10,
     borderRadius: 16,
-    shadowColor: '#f97316',
+    shadowColor: '#10b981',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 6,

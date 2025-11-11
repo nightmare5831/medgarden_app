@@ -241,7 +241,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentProductIndex:
         state.currentProductIndex < state.filteredProducts.length - 1
           ? state.currentProductIndex + 1
-          : state.currentProductIndex,
+          : 0, // Infinite spin: go back to beginning
     })),
 
   previousProduct: () =>
@@ -249,7 +249,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentProductIndex:
         state.currentProductIndex > 0
           ? state.currentProductIndex - 1
-          : state.currentProductIndex,
+          : state.filteredProducts.length - 1, // Infinite spin: go to end
     })),
 
   selectFilter: (filterId) =>

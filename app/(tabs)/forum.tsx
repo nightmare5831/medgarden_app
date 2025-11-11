@@ -13,7 +13,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../store/useAppStore';
 import { router, useFocusEffect } from 'expo-router';
-import FABMenu from '../../components/FABMenu';
 import { messageApi, Message } from '../../services/api';
 import { messagesChannel } from '../../services/pusher';
 
@@ -27,6 +26,8 @@ export default function Forum() {
   const [activeTab, setActiveTab] = useState<'all' | 'favorites' | 'mine'>('all');
   const [selectMode, setSelectMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<string | number>>(new Set());
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
   useEffect(() => {
     loadMessages();
@@ -311,7 +312,7 @@ export default function Forum() {
                     <View style={styles.postMeta}>
                       <View style={[styles.roleBadge, message.ownerRole === 'seller' ? styles.sellerBadge : styles.buyerBadge]}>
                         <Text style={styles.roleBadgeText}>
-                          {message.ownerRole === 'seller' ? 'Vendedor' : 'Comprador'}
+                          {message.ownerRole === 'seller' ? 'Profissional' : 'Paciente'}
                         </Text>
                       </View>
                       <Text style={styles.postTime}>• {message.timestamp}</Text>
@@ -380,6 +381,23 @@ export default function Forum() {
               <Ionicons name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
           </View>
+
+          {/* Privacy Toggle */}
+          <View style={styles.privacyContainer}>
+            <View style={styles.privacyInfo}>
+              <Ionicons name={isPrivate ? "lock-closed" : "earth"} size={20} color={isPrivate ? "#ef4444" : "#10b981"} />
+              <Text style={styles.privacyText}>
+                {isPrivate ? "Mensagem Privada" : "Mensagem Pública"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.privacyToggle, isPrivate && styles.privacyToggleActive]}
+              onPress={() => setIsPrivate(!isPrivate)}
+            >
+              <View style={[styles.privacyToggleThumb, isPrivate && styles.privacyToggleThumbActive]} />
+            </TouchableOpacity>
+          </View>
+
           <TextInput
             style={styles.newMessageInput}
             placeholder="Digite sua mensagem..."
@@ -389,18 +407,52 @@ export default function Forum() {
             maxLength={500}
             autoFocus
           />
-          <TouchableOpacity
-            style={[styles.postButton, !newMessageText.trim() && styles.postButtonDisabled]}
-            onPress={handleCreateMessage}
-            disabled={!newMessageText.trim()}
-          >
-            <Text style={styles.postButtonText}>Publicar</Text>
-          </TouchableOpacity>
+
+          {/* Image Preview */}
+          {selectedImages.length > 0 && (
+            <View style={styles.imagePreviewContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {selectedImages.map((uri, index) => (
+                  <View key={index} style={styles.imagePreviewWrapper}>
+                    <View style={styles.imagePreview}>
+                      <Ionicons name="image" size={40} color="#6b7280" />
+                    </View>
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => setSelectedImages(selectedImages.filter((_, i) => i !== index))}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Action Buttons Row */}
+          <View style={styles.messageActionsRow}>
+            <TouchableOpacity
+              style={styles.attachButton}
+              onPress={() => {
+                Alert.alert('Adicionar Foto', 'Funcionalidade de upload de fotos será implementada em breve!');
+                // TODO: Implement image picker
+                setSelectedImages([...selectedImages, 'placeholder']);
+              }}
+            >
+              <Ionicons name="camera" size={24} color="#3b82f6" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.postButton, !newMessageText.trim() && styles.postButtonDisabled]}
+              onPress={handleCreateMessage}
+              disabled={!newMessageText.trim()}
+            >
+              <Text style={styles.postButtonText}>Publicar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
-      {/* FAB Menu - Back to Main and Logout */}
-      <FABMenu mode="forum" />
     </SafeAreaView>
   );
 }
@@ -650,7 +702,7 @@ const styles = StyleSheet.create({
   },
   deleteSelectedButton: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 20,
     right: 20,
     width: 56,
     height: 56,
@@ -682,7 +734,7 @@ const styles = StyleSheet.create({
   },
   createButton: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 20,
     right: 20,
     width: 56,
     height: 56,
@@ -698,7 +750,7 @@ const styles = StyleSheet.create({
   },
   newMessageContainer: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 20,
     left: '5%',
     right: '5%',
     width: '90%',
@@ -736,6 +788,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   postButton: {
+    flex: 1,
     backgroundColor: '#2563eb',
     borderRadius: 12,
     paddingVertical: 14,
@@ -748,5 +801,88 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  privacyContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  privacyInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  privacyText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  privacyToggle: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#d1d5db',
+    justifyContent: 'center',
+    padding: 2,
+  },
+  privacyToggleActive: {
+    backgroundColor: '#ef4444',
+  },
+  privacyToggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  privacyToggleThumbActive: {
+    alignSelf: 'flex-end',
+  },
+  imagePreviewContainer: {
+    marginBottom: 12,
+  },
+  imagePreviewWrapper: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  imagePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+  },
+  messageActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  attachButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#dbeafe',
   },
 });

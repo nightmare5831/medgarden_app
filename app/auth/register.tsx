@@ -22,7 +22,7 @@ export default function Register() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
+  const [role, setRole] = useState<'patient' | 'professional' | 'association'>('patient');
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
@@ -45,7 +45,9 @@ export default function Register() {
     }
 
     try {
-      await register(name, email, password, passwordConfirmation, phone, role);
+      // Map new roles to backend roles (patient -> buyer, professional/association -> seller)
+      const backendRole = role === 'patient' ? 'buyer' : 'seller';
+      await register(name, email, password, passwordConfirmation, phone, backendRole);
       Alert.alert(
         'Sucesso',
         'Conta criada com sucesso!',
@@ -168,30 +170,44 @@ export default function Register() {
             <Text style={styles.label}>Tipo de Conta</Text>
             <View style={styles.roleContainer}>
               <TouchableOpacity
-                style={[styles.roleButton, role === 'buyer' && styles.roleButtonActive]}
-                onPress={() => setRole('buyer')}
+                style={[styles.roleButton, role === 'patient' && styles.roleButtonActive]}
+                onPress={() => setRole('patient')}
               >
                 <Ionicons
-                  name="cart-outline"
+                  name="person-outline"
                   size={24}
-                  color={role === 'buyer' ? '#2563eb' : '#6b7280'}
+                  color={role === 'patient' ? '#2563eb' : '#6b7280'}
                 />
-                <Text style={[styles.roleButtonText, role === 'buyer' && styles.roleButtonTextActive]}>
-                  Comprador
+                <Text style={[styles.roleButtonText, role === 'patient' && styles.roleButtonTextActive]}>
+                  Paciente
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.roleButton, role === 'seller' && styles.roleButtonActive]}
-                onPress={() => setRole('seller')}
+                style={[styles.roleButton, role === 'professional' && styles.roleButtonActive]}
+                onPress={() => setRole('professional')}
               >
                 <Ionicons
-                  name="storefront-outline"
+                  name="medkit-outline"
                   size={24}
-                  color={role === 'seller' ? '#2563eb' : '#6b7280'}
+                  color={role === 'professional' ? '#2563eb' : '#6b7280'}
                 />
-                <Text style={[styles.roleButtonText, role === 'seller' && styles.roleButtonTextActive]}>
-                  Vendedor
+                <Text style={[styles.roleButtonText, role === 'professional' && styles.roleButtonTextActive]}>
+                  Profissional
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'association' && styles.roleButtonActive]}
+                onPress={() => setRole('association')}
+              >
+                <Ionicons
+                  name="people-outline"
+                  size={24}
+                  color={role === 'association' ? '#2563eb' : '#6b7280'}
+                />
+                <Text style={[styles.roleButtonText, role === 'association' && styles.roleButtonTextActive]}>
+                  Associação
                 </Text>
               </TouchableOpacity>
             </View>
@@ -288,19 +304,19 @@ const styles = StyleSheet.create({
   },
   roleContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   roleButton: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'white',
     borderWidth: 2,
     borderColor: '#d1d5db',
     borderRadius: 8,
-    padding: 16,
-    gap: 8,
+    padding: 12,
+    gap: 6,
   },
   roleButtonActive: {
     borderColor: '#2563eb',

@@ -70,7 +70,7 @@ export default function PerfilScreen() {
               <View style={styles.nameContainer}>
                 <Text style={styles.userName}>{currentUser.name}</Text>
                 <View style={styles.roleBadge}>
-                  <Text style={styles.roleBadgeText}>{currentUser.role === 'buyer' ? 'Comprador' : 'Vendedor'}</Text>
+                  <Text style={styles.roleBadgeText}>{currentUser.role === 'buyer' ? 'Paciente' : 'Profissional'}</Text>
                 </View>
               </View>
               <Text style={styles.userEmail}>{currentUser.email}</Text>
