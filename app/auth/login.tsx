@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  ImageBackground,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAppStore } from '../../store/useAppStore';
@@ -39,29 +40,33 @@ export default function Login() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <ImageBackground
+      source={require('../../assets/bg.png')}
       style={styles.container}
+      resizeMode="cover"
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Image
-            source={require('../../assets/green.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>medgarden</Text>
-          <Text style={styles.subtitle}>Bem-vindo de volta</Text>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.card}>
+          <View style={styles.header}>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.title}>MedGarden</Text>
+          </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Endereço de Email</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#6b7280" style={styles.inputIcon} />
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>E-mail</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Digite seu email"
+                placeholder="Digite seu e-mail"
+                placeholderTextColor="#B3B3B3"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -69,58 +74,47 @@ export default function Login() {
                 autoComplete="email"
               />
             </View>
-          </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Senha</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Digite sua senha"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete="password"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color="#6b7280"
-                  style={styles.inputIcon}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Senha</Text>
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Digite sua senha"
+                  placeholderTextColor="#B3B3B3"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
                 />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.rememberContainer}>
-            <TouchableOpacity
-              style={styles.checkbox}
-              onPress={() => setRememberMe(!rememberMe)}
-            >
-              <View style={[styles.checkboxBox, rememberMe && styles.checkboxBoxChecked]}>
-                {rememberMe && <Ionicons name="checkmark" size={16} color="white" />}
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color="#6b7280"
+                  />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.checkboxLabel}>Lembrar de mim</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isAuthLoading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={isAuthLoading}
+            >
+              {isAuthLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.buttonText}>Entrar</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.forgotPassword}>
+              <Text style={styles.forgotPasswordText}>Esqueceu sua senha?</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={[styles.button, isAuthLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={isAuthLoading}
-          >
-            {isAuthLoading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <>
-                <Ionicons name="log-in-outline" size={20} color="white" style={styles.buttonIcon} />
-                <Text style={styles.buttonText}>Entrar</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Não tem uma conta? </Text>
@@ -130,41 +124,48 @@ export default function Login() {
               </TouchableOpacity>
             </Link>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#000000',
+  },
+  keyboardView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    alignItems: 'center',
+    padding: 20,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 32,
+    width: '80%',
+    height: '70%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 28,
   },
   logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
+    width: 150,
+    height: 150,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginTop: 8,
+    color: '#000000',
   },
   form: {
     width: '100%',
@@ -173,86 +174,79 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#000000',
+    marginBottom: 10,
   },
-  inputContainer: {
+  input: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#D9D9D9',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    fontSize: 20,
+    color: '#000000',
+    minHeight: 56,
+  },
+  passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#D9D9D9',
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    minHeight: 56,
   },
-  inputIcon: {
-    marginRight: 8,
-  },
-  input: {
+  passwordInput: {
     flex: 1,
-    height: 48,
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 20,
+    color: '#000000',
   },
-  rememberContainer: {
-    marginBottom: 24,
-  },
-  checkbox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkboxBox: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    borderRadius: 4,
-    marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxBoxChecked: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: '#374151',
+  eyeIcon: {
+    padding: 4,
   },
   button: {
-    backgroundColor: '#2563eb',
-    flexDirection: 'row',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: 8,
-    marginBottom: 24,
+    height: 56,
+    borderRadius: 28,
+    marginTop: 12,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonIcon: {
-    marginRight: 8,
-  },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 20,
     fontWeight: '600',
+  },
+  forgotPassword: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  forgotPasswordText: {
+    fontSize: 20,
+    color: '#000000',
+    textDecorationLine: 'underline',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 16,
   },
   footerText: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: 20,
+    color: '#FFFFFF',
   },
   link: {
-    fontSize: 14,
-    color: '#2563eb',
+    fontSize: 20,
+    color: '#00FF60',
     fontWeight: '600',
   },
 });

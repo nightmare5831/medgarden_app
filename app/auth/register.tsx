@@ -22,20 +22,22 @@ export default function Register() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [role, setRole] = useState<'patient' | 'professional' | 'association'>('patient');
+  const [role, setRole] = useState<'patient' | 'professional' | 'association' | 'store'>('patient');
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
   const { register, isAuthLoading } = useAppStore();
 
   const handleRegister = async () => {
-    if (!name || !email || !password || !passwordConfirmation) {
+    if (!name || !email || !password) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios');
       return;
     }
 
-    if (password !== passwordConfirmation) {
-      Alert.alert('Erro', 'As senhas não correspondem');
+    if (!agreeToTerms) {
+      Alert.alert('Erro', 'Você deve concordar com os Termos da MedGarden');
       return;
     }
 
@@ -45,9 +47,9 @@ export default function Register() {
     }
 
     try {
-      // Map new roles to backend roles (patient -> buyer, professional/association -> seller)
+      // Map new roles to backend roles (patient -> buyer, others -> seller)
       const backendRole = role === 'patient' ? 'buyer' : 'seller';
-      await register(name, email, password, passwordConfirmation, phone, backendRole);
+      await register(name, email, password, password, phone, backendRole);
       Alert.alert(
         'Sucesso',
         'Conta criada com sucesso!',
@@ -65,122 +67,94 @@ export default function Register() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Image
-            source={require('../../assets/green.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>medgarden</Text>
-          <Text style={styles.subtitle}>Criar Conta</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Cadastro de novo usuário</Text>
+        </View>
+
+        <View style={styles.profileSection}>
+          <TouchableOpacity style={styles.profileImageContainer}>
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            ) : (
+              <View style={styles.profilePlaceholder}>
+                <Ionicons
+                  name="person-outline"
+                  size={60}
+                  color="#9ca3af"
+                />
+              </View>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.profileText}>Clique para adicionar foto de perfil</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome Completo *</Text>
+            <Text style={styles.label}>Nome Completo*</Text>
             <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#6b7280" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Digite seu nome"
+                placeholder="Digite seu nome completo"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
+                placeholderTextColor="#b3b3b3"
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Endereço de Email *</Text>
+            <Text style={styles.label}>Email*</Text>
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#6b7280" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Digite seu email"
+                placeholder="Digite seu e-mail"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"
+                placeholderTextColor="#b3b3b3"
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Telefone (Opcional)</Text>
+            <Text style={styles.label}>Senha*</Text>
             <View style={styles.inputContainer}>
-              <Ionicons name="call-outline" size={20} color="#6b7280" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="(00) 00000-0000"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                autoComplete="tel"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Senha *</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Mínimo 8 caracteres"
+                placeholder="Digite uma senha de acesso"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                placeholderTextColor="#b3b3b3"
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
                   color="#6b7280"
-                  style={styles.inputIcon}
                 />
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirmar Senha *</Text>
-            <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Digite a senha novamente"
-                value={passwordConfirmation}
-                onChangeText={setPasswordConfirmation}
-                secureTextEntry={!showPasswordConfirmation}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity onPress={() => setShowPasswordConfirmation(!showPasswordConfirmation)}>
-                <Ionicons
-                  name={showPasswordConfirmation ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color="#6b7280"
-                  style={styles.inputIcon}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tipo de Conta</Text>
+            <Text style={styles.label}>Tipo de conta</Text>
             <View style={styles.roleContainer}>
               <TouchableOpacity
                 style={[styles.roleButton, role === 'patient' && styles.roleButtonActive]}
                 onPress={() => setRole('patient')}
               >
                 <Ionicons
-                  name="person-outline"
-                  size={24}
-                  color={role === 'patient' ? '#2563eb' : '#6b7280'}
+                  name="document-text-outline"
+                  size={80}
+                  color={role === 'patient' ? '#10b981' : '#000'}
                 />
-                <Text style={[styles.roleButtonText, role === 'patient' && styles.roleButtonTextActive]}>
-                  Paciente
-                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -189,12 +163,9 @@ export default function Register() {
               >
                 <Ionicons
                   name="medkit-outline"
-                  size={24}
-                  color={role === 'professional' ? '#2563eb' : '#6b7280'}
+                  size={80}
+                  color={role === 'professional' ? '#10b981' : '#000'}
                 />
-                <Text style={[styles.roleButtonText, role === 'professional' && styles.roleButtonTextActive]}>
-                  Profissional
-                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -202,16 +173,41 @@ export default function Register() {
                 onPress={() => setRole('association')}
               >
                 <Ionicons
-                  name="people-outline"
-                  size={24}
-                  color={role === 'association' ? '#2563eb' : '#6b7280'}
+                  name="people-circle-outline"
+                  size={80}
+                  color={role === 'association' ? '#10b981' : '#000'}
                 />
-                <Text style={[styles.roleButtonText, role === 'association' && styles.roleButtonTextActive]}>
-                  Associação
-                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.roleButton, role === 'store' && styles.roleButtonActive]}
+                onPress={() => setRole('store')}
+              >
+                <Ionicons
+                  name="business-outline"
+                  size={80}
+                  color={role === 'store' ? '#10b981' : '#000'}
+                />
               </TouchableOpacity>
             </View>
           </View>
+
+          <TouchableOpacity
+            style={styles.termsContainer}
+            onPress={() => setAgreeToTerms(!agreeToTerms)}
+          >
+            <View style={[styles.checkbox, agreeToTerms && styles.checkboxChecked]}>
+              {agreeToTerms && <Ionicons name="checkmark" size={16} color="white" />}
+            </View>
+            <View style={styles.termsTextContainer}>
+              <Text style={styles.termsText}>
+                Concordo com os <Text style={styles.termsLink}>Termos da MedGarden</Text>
+              </Text>
+              <Text style={styles.termsSubtext}>
+                Leia com atenção a nossa política de privacidade e termos de uso.
+              </Text>
+            </View>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, isAuthLoading && styles.buttonDisabled]}
@@ -221,21 +217,9 @@ export default function Register() {
             {isAuthLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <>
-                <Ionicons name="person-add-outline" size={20} color="white" style={styles.buttonIcon} />
-                <Text style={styles.buttonText}>Criar Conta</Text>
-              </>
+              <Text style={styles.buttonText}>Viver essa experiência</Text>
             )}
           </TouchableOpacity>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Já tem uma conta? </Text>
-            <Link href="/auth/login" asChild>
-              <TouchableOpacity>
-                <Text style={styles.link}>Faça login aqui</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -245,7 +229,7 @@ export default function Register() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#ffffff',
   },
   scrollContent: {
     flexGrow: 1,
@@ -253,24 +237,53 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  backButton: {
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 16,
+    color: '#000',
+    fontWeight: '400',
+  },
+  profileSection: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
+  profileImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    marginBottom: 12,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 16,
+  profilePlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  subtitle: {
-    fontSize: 16,
+  profileIconPlaceholder: {
+    width: 60,
+    height: 60,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  profileText: {
+    fontSize: 12,
     color: '#6b7280',
-    marginTop: 8,
   },
   form: {
     width: '100%',
@@ -289,80 +302,102 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#d9d9d9',
     borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  inputIcon: {
-    marginRight: 8,
+    paddingHorizontal: 16,
+    height: 48,
   },
   input: {
     flex: 1,
-    height: 48,
     fontSize: 16,
-    color: '#111827',
+    color: '#000',
   },
   roleContainer: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 12,
   },
   roleButton: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '48%',
     backgroundColor: 'white',
     borderWidth: 2,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    gap: 6,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 0,
+    overflow: 'hidden',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   roleButtonActive: {
-    borderColor: '#2563eb',
-    backgroundColor: '#eff6ff',
+    borderColor: '#10b981',
+    backgroundColor: '#d1fae5',
   },
   roleButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
+    fontSize: 20,
+    fontWeight: '500',
+    color: '#000',
   },
   roleButtonTextActive: {
-    color: '#2563eb',
+    color: '#10b981',
+    fontWeight: '600',
+  },
+  roleIcon: {
+    width: '100%',
+    height: '100%',
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    borderRadius: 4,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  checkboxChecked: {
+    backgroundColor: '#000',
+    borderColor: '#000',
+  },
+  termsTextContainer: {
+    flex: 1,
+  },
+  termsText: {
+    fontSize: 14,
+    color: '#000',
+    marginBottom: 4,
+  },
+  termsLink: {
+    fontWeight: '600',
+    color: '#000',
+  },
+  termsSubtext: {
+    fontSize: 12,
+    color: '#6b7280',
   },
   button: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#000',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: 8,
-    marginTop: 8,
+    height: 56,
+    borderRadius: 28,
     marginBottom: 24,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonIcon: {
-    marginRight: 8,
-  },
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  link: {
-    fontSize: 14,
-    color: '#2563eb',
     fontWeight: '600',
   },
 });

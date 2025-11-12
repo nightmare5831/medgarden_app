@@ -4,7 +4,7 @@
     "slug": "medgarden",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/green.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "medgarden",
     "newArchEnabled": false,
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/green.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.yourcompany.medgardenshop"
