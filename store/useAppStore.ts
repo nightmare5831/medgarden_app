@@ -35,7 +35,7 @@ interface AppState {
 
   // Auth Actions
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  register: (name: string, email: string, password: string, passwordConfirmation: string, phone?: string, role?: 'buyer' | 'seller') => Promise<void>;
+  register: (name: string, email: string, password: string, passwordConfirmation: string, phone?: string, role?: 'patient' | 'professional' | 'association' | 'store') => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 
@@ -104,7 +104,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  register: async (name, email, password, passwordConfirmation, phone, role = 'buyer') => {
+  register: async (name, email, password, passwordConfirmation, phone, role = 'patient') => {
     set({ isAuthLoading: true, error: null });
     try {
       const response = await authApi.register(name, email, password, passwordConfirmation, phone, role);

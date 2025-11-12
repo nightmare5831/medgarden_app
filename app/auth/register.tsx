@@ -47,9 +47,8 @@ export default function Register() {
     }
 
     try {
-      // Map new roles to backend roles (patient -> buyer, others -> seller)
-      const backendRole = role === 'patient' ? 'buyer' : 'seller';
-      await register(name, email, password, password, phone, backendRole);
+      // Send the role directly to backend (no mapping needed)
+      await register(name, email, password, password, phone, role);
       Alert.alert(
         'Sucesso',
         'Conta criada com sucesso!',
@@ -80,9 +79,9 @@ export default function Register() {
             ) : (
               <View style={styles.profilePlaceholder}>
                 <Ionicons
-                  name="person-outline"
-                  size={60}
-                  color="#9ca3af"
+                  name="person"
+                  size={50}
+                  color="#6FFF25"
                 />
               </View>
             )}
@@ -151,10 +150,13 @@ export default function Register() {
                 onPress={() => setRole('patient')}
               >
                 <Ionicons
-                  name="document-text-outline"
-                  size={80}
-                  color={role === 'patient' ? '#10b981' : '#000'}
+                  name="document-text"
+                  size={32}
+                  color="#6FFF25"
                 />
+                <Text style={[styles.roleButtonText, role === 'patient' && styles.roleButtonTextActive]}>
+                  Paciente
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -162,10 +164,13 @@ export default function Register() {
                 onPress={() => setRole('professional')}
               >
                 <Ionicons
-                  name="medkit-outline"
-                  size={80}
-                  color={role === 'professional' ? '#10b981' : '#000'}
+                  name="person"
+                  size={32}
+                  color="#6FFF25"
                 />
+                <Text style={[styles.roleButtonText, role === 'professional' && styles.roleButtonTextActive]}>
+                  Profissional
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -173,10 +178,13 @@ export default function Register() {
                 onPress={() => setRole('association')}
               >
                 <Ionicons
-                  name="people-circle-outline"
-                  size={80}
-                  color={role === 'association' ? '#10b981' : '#000'}
+                  name="people"
+                  size={32}
+                  color="#6FFF25"
                 />
+                <Text style={[styles.roleButtonText, role === 'association' && styles.roleButtonTextActive]}>
+                  Associação
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -184,10 +192,13 @@ export default function Register() {
                 onPress={() => setRole('store')}
               >
                 <Ionicons
-                  name="business-outline"
-                  size={80}
-                  color={role === 'store' ? '#10b981' : '#000'}
+                  name="storefront"
+                  size={32}
+                  color="#6FFF25"
                 />
+                <Text style={[styles.roleButtonText, role === 'store' && styles.roleButtonTextActive]}>
+                  Lojista
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -234,7 +245,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 44,
   },
   header: {
     flexDirection: 'row',
@@ -245,30 +256,29 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   headerTitle: {
-    fontSize: 16,
-    color: '#000',
+    fontSize: 20,
+    color: '#000000',
     fontWeight: '400',
   },
   profileSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   profileImageContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderWidth: 3,
+    borderColor: '#d1d5db',
     marginBottom: 12,
   },
   profilePlaceholder: {
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: '100%',
     borderRadius: 50,
-    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -282,64 +292,68 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   profileText: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#6b7280',
   },
   form: {
     width: '100%',
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#000000',
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#d9d9d9',
-    borderRadius: 8,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
     paddingHorizontal: 16,
-    height: 48,
+    paddingVertical: 14,
+    minHeight: 48,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#000',
+    fontSize: 20,
+    color: '#000000',
+    padding: 0,
   },
   roleContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+    justifyContent: 'space-between',
+    gap: 8,
   },
   roleButton: {
-    width: '48%',
-    backgroundColor: 'white',
+    flex: 1,
+    backgroundColor: '#ffffff',
     borderWidth: 2,
     borderColor: '#e5e7eb',
     borderRadius: 12,
-    padding: 0,
-    overflow: 'hidden',
-    aspectRatio: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    minHeight: 80,
   },
   roleButtonActive: {
-    borderColor: '#10b981',
-    backgroundColor: '#d1fae5',
+    borderColor: '#6FFF25',
+    backgroundColor: '#E5FFD6',
   },
   roleButtonText: {
     fontSize: 20,
     fontWeight: '500',
-    color: '#000',
+    color: '#000000',
+    marginTop: 8,
+    textAlign: 'center',
   },
   roleButtonTextActive: {
-    color: '#10b981',
+    color: '#000000',
     fontWeight: '600',
   },
   roleIcon: {
@@ -349,8 +363,8 @@ const styles = StyleSheet.create({
   termsContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 20,
   },
   checkbox: {
     width: 20,
@@ -371,33 +385,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   termsText: {
-    fontSize: 14,
-    color: '#000',
+    fontSize: 18,
+    color: '#000000',
     marginBottom: 4,
   },
   termsLink: {
     fontWeight: '600',
-    color: '#000',
+    color: '#000000',
   },
   termsSubtext: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#6b7280',
   },
   button: {
-    backgroundColor: '#000',
+    backgroundColor: '#000000',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     height: 56,
     borderRadius: 28,
+    marginTop: 0,
     marginBottom: 24,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#ffffff',
+    fontSize: 18,
     fontWeight: '600',
   },
 });

@@ -22,7 +22,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: 'buyer' | 'seller' | 'admin';
+  role: 'patient' | 'professional' | 'association' | 'store' | 'super_admin';
 }
 
 interface LoginResponse {
@@ -174,7 +174,7 @@ export const authApi = {
     password: string,
     password_confirmation: string,
     phone?: string,
-    role: 'buyer' | 'seller' = 'buyer'
+    role: 'patient' | 'professional' | 'association' | 'store' = 'patient'
   ): Promise<RegisterResponse> => {
     const response = await apiCall<RegisterResponse>('/register', {
       method: 'POST',
