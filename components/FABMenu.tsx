@@ -38,11 +38,8 @@ export default function FABMenu({ mode = 'main' }: FABMenuProps) {
 
   const handleBackToMain = () => {
     setIsOpen(false);
-    if (currentUser?.role === 'seller') {
-      router.push('/(tabs)/seller-dashboard');
-    } else {
-      router.push('/(tabs)');
-    }
+    // All users go to main dashboard (index)
+    router.push('/(tabs)');
   };
 
   return (

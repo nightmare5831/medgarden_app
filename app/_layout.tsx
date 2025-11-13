@@ -16,34 +16,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     const inAuthGroup = segments[0] === 'auth';
-    const inTabsGroup = segments[0] === '(tabs)';
-    const { currentUser } = useAppStore.getState();
 
     if (!isAuthenticated && !inAuthGroup) {
       // Redirect to login if not authenticated
       router.replace('/auth/login');
     } else if (isAuthenticated && inAuthGroup) {
-      // Redirect based on user role after login
-      if (currentUser?.role === 'seller') {
-        router.replace('/(tabs)/seller-dashboard');
-      } else {
-        router.replace('/(tabs)'); // Buyer goes to product catalog
-      }
-    } else if (isAuthenticated && inTabsGroup && currentUser) {
-      // Protect routes based on role
-      const currentRoute = segments[1];
-
-      if (currentUser.role === 'seller') {
-        // Seller trying to access buyer's product catalog
-        if (currentRoute === 'index' || !currentRoute) {
-          router.replace('/(tabs)/seller-dashboard');
-        }
-      } else if (currentUser.role === 'buyer' || currentUser.role === 'admin') {
-        // Buyer/Admin trying to access seller dashboard
-        if (currentRoute === 'seller-dashboard') {
-          router.replace('/(tabs)');
-        }
-      }
+      // All users go to main dashboard (index) after login
+      router.replace('/(tabs)');
     }
   }, [isAuthenticated, segments]);
 

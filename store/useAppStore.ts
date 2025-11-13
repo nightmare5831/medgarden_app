@@ -53,6 +53,7 @@ interface AppState {
   goBackFilter: () => void;
   resetFilters: () => void;
   setSelectedMediaIndex: (index: number) => void;
+  filterByCategory: (category: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -316,4 +317,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
 
   setSelectedMediaIndex: (index) => set({ selectedMediaIndex: index }),
+
+  filterByCategory: (category) =>
+    set((state) => {
+      if (!category) {
+        // No category selected, show all products
+        return {
+          filteredProducts: state.products,
+          currentProductIndex: 0,
+        };
+      }
+
+      // Filter products by parent category only
+      const filtered = state.products.filter((product) => {
+        return product.category?.toLowerCase() === category.toLowerCase();
+      });
+
+      return {
+        filteredProducts: filtered.length > 0 ? filtered : state.products,
+        currentProductIndex: 0,
+      };
+    }),
 }));
