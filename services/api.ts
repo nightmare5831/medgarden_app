@@ -127,23 +127,27 @@ function transformProduct(apiProduct: any): Product {
     id: apiProduct.id.toString(),
     name: apiProduct.name,
     description: apiProduct.description || '',
-    price: parseFloat(apiProduct.current_price || apiProduct.base_price),
-    originalPrice: apiProduct.base_price ? parseFloat(apiProduct.base_price) : undefined,
+    price: parseFloat(apiProduct.price || apiProduct.current_price || apiProduct.base_price),
+    originalPrice: apiProduct.originalPrice || (apiProduct.base_price ? parseFloat(apiProduct.base_price) : undefined),
     discount: calculateDiscount(parseFloat(apiProduct.base_price), parseFloat(apiProduct.current_price)),
     images: images,
     thumbnail: images[0] || '',
     category: apiProduct.category || 'Uncategorized',
-    rating: 4.5, // TODO: Add rating system to backend
-    reviewCount: 0, // TODO: Add reviews to backend
-    featured: apiProduct.status === 'approved' && apiProduct.is_active,
-    shipping: {
-      free: true, // Default for now
+    rating: apiProduct.rating || 4.5,
+    reviewCount: apiProduct.reviewCount || 0,
+    featured: apiProduct.featured !== undefined ? apiProduct.featured : (apiProduct.status === 'approved' && apiProduct.is_active),
+    shipping: apiProduct.shipping || {
+      free: true,
       days: 5,
     },
     // 3D Model support (Phase 4)
-    model3dUrl: apiProduct.model_3d_url,
-    model3dType: apiProduct.model_3d_type,
+    model3dUrl: apiProduct.model3dUrl || apiProduct.model_3d_url,
+    model3dType: apiProduct.model3dType || apiProduct.model_3d_type,
     videos: videos,
+    // Owner information - backend API returns flattened fields (ownerName, ownerRole)
+    ownerId: apiProduct.ownerId?.toString() || apiProduct.user_id?.toString(),
+    ownerName: apiProduct.ownerName || apiProduct.user?.name,
+    ownerRole: apiProduct.ownerRole || apiProduct.user?.role,
   };
 }
 

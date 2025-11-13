@@ -19,6 +19,10 @@ export interface Product {
   model3dUrl?: string;
   model3dType?: 'glb' | 'obj' | 'stl';
   videos?: string[];
+  // Owner information
+  ownerId?: string;
+  ownerName?: string;
+  ownerRole?: string;
 }
 
 export const categories = [
