@@ -3,10 +3,11 @@ import { filterTree, type FilterConfig } from '../data/filterConfig';
 import type { Product } from '../data/products';
 import type { Review } from '../data/reviews';
 import type { Notification } from '../data/notifications';
-import { productApi, authApi, type User } from '../services/api';
+import { productApi, authApi, messageApi, type User, type Message } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type CatalogMode = 'browse' | 'detail';
+type ContentItem = (Product & { type: 'product' }) | (Message & { type: 'message' });
 
 interface AppState {
   // Auth State
@@ -17,6 +18,7 @@ interface AppState {
 
   // App State
   products: Product[];
+  messages: Message[];
   reviews: Review[];
   notifications: Notification[];
   followedUsers: string[];
@@ -30,7 +32,7 @@ interface AppState {
   currentProductIndex: number;
   selectedFilters: string[];
   currentFilterSet: FilterConfig[];
-  filteredProducts: Product[];
+  filteredProducts: ContentItem[];
   selectedMediaIndex: number;
 
   // Auth Actions
@@ -44,6 +46,7 @@ interface AppState {
   toggleLike: (reviewId: string) => void;
   toggleSave: (productId: string) => void;
   loadProducts: () => Promise<void>;
+  loadMessages: () => Promise<void>;
 
   // Catalog Actions
   setCatalogMode: (mode: CatalogMode) => void;
@@ -65,6 +68,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // App initial state
   products: [],
+  messages: [],
   reviews: [],
   notifications: [],
   followedUsers: [],
@@ -179,28 +183,21 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       // Add mock categories and limit images (backend provides 3D model)
       const categories = ['male', 'female', 'graduation', 'wedding'];
-      const subcategories: Record<string, string[]> = {
-        male: ['rings', 'necklaces', 'bracelets', 'earrings', 'watches', 'chains'],
-        female: ['rings', 'necklaces', 'bracelets', 'earrings', 'anklets', 'pendants'],
-        graduation: ['rings', 'medals', 'pins', 'cufflinks', 'pendants', 'sets'],
-        wedding: ['rings', 'sets', 'tiaras', 'bracelets', 'earrings', 'necklaces'],
-      };
 
       const productsWithMedia = products.map((p, idx) => {
         const category = categories[idx % categories.length];
-        const subcat = subcategories[category][idx % subcategories[category].length];
 
         return {
           ...p,
+          type: 'product' as const,
           category,
-          subcategory: subcat,
           images: p.images.slice(0, 3),
           videos: p.videos?.length > 0 ? p.videos : ['https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'],
         };
       });
 
       set({
-        products: productsWithMedia,
+        products: productsWithMedia.map(({ type, ...p }) => p),
         filteredProducts: productsWithMedia,
         isLoading: false,
         error: null
@@ -210,6 +207,19 @@ export const useAppStore = create<AppState>((set, get) => ({
         isLoading: false,
         error: 'Failed to load products. Please check your connection.'
       });
+    }
+  },
+
+  // Load messages from API
+  loadMessages: async () => {
+    const { authToken } = get();
+    if (!authToken) return;
+
+    try {
+      const messages = await messageApi.getAll(authToken);
+      set({ messages });
+    } catch (error) {
+      console.error('Failed to load messages:', error);
     }
   },
 
@@ -271,21 +281,19 @@ export const useAppStore = create<AppState>((set, get) => ({
         return {
           selectedFilters: newSelectedFilters,
           currentFilterSet: newFilterSet,
-          filteredProducts: filtered.length > 0 ? filtered : state.products,
+          filteredProducts: (filtered.length > 0 ? filtered : state.products).map(p => ({ ...p, type: 'product' as const })),
           currentProductIndex: 0,
         };
       } else {
-        // Subcategory (leaf node): Filter products by parent category AND subcategory
+        // Leaf node: Filter products by parent category only
         const parentCategory = state.selectedFilters[state.selectedFilters.length - 1];
 
         const filtered = state.products.filter((product) => {
-          const categoryMatch = product.category?.toLowerCase() === parentCategory?.toLowerCase();
-          const subcategoryMatch = product.subcategory?.toLowerCase() === filterId.toLowerCase();
-          return categoryMatch && subcategoryMatch;
+          return product.category?.toLowerCase() === parentCategory?.toLowerCase();
         });
 
         return {
-          filteredProducts: filtered.length > 0 ? filtered : state.products,
+          filteredProducts: (filtered.length > 0 ? filtered : state.products).map(p => ({ ...p, type: 'product' as const })),
           currentProductIndex: 0,
         };
       }
@@ -303,7 +311,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         selectedFilters: newSelectedFilters,
         currentFilterSet: newFilterSet,
-        filteredProducts: state.products,
+        filteredProducts: state.products.map(p => ({ ...p, type: 'product' as const })),
         currentProductIndex: 0,
       };
     }),
@@ -312,7 +320,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       selectedFilters: [],
       currentFilterSet: filterTree.root,
-      filteredProducts: state.products,
+      filteredProducts: state.products.map(p => ({ ...p, type: 'product' as const })),
       currentProductIndex: 0,
     })),
 
@@ -322,19 +330,47 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => {
       if (!category) {
         // No category selected, show all products
+        const allContent: ContentItem[] = state.products.map(p => ({ ...p, type: 'product' as const }));
         return {
-          filteredProducts: state.products,
+          filteredProducts: allContent,
           currentProductIndex: 0,
         };
       }
 
-      // Filter products by parent category only
-      const filtered = state.products.filter((product) => {
-        return product.category?.toLowerCase() === category.toLowerCase();
-      });
+      // New logic based on category:
+      // 1. Professionals (male) - all products and messages
+      // 2. Patients (female) - messages only
+      // 3. Associations (graduation) - messages and products
+      // 4. Products (wedding) - products only
+
+      let filteredContent: ContentItem[] = [];
+
+      if (category === 'male') {
+        // Professionals: all products + messages
+        const products = state.products.map(p => ({ ...p, type: 'product' as const }));
+        const messages = state.messages.map(m => ({ ...m, type: 'message' as const }));
+        filteredContent = [...products, ...messages];
+      } else if (category === 'female') {
+        // Patients: messages only
+        filteredContent = state.messages.map(m => ({ ...m, type: 'message' as const }));
+      } else if (category === 'graduation') {
+        // Associations: messages + products
+        const messages = state.messages.map(m => ({ ...m, type: 'message' as const }));
+        const products = state.products.map(p => ({ ...p, type: 'product' as const }));
+        filteredContent = [...messages, ...products];
+      } else if (category === 'wedding') {
+        // Products: products only
+        filteredContent = state.products.map(p => ({ ...p, type: 'product' as const }));
+      } else {
+        // Fallback to old behavior for unknown categories
+        const filtered = state.products.filter((product) => {
+          return product.category?.toLowerCase() === category.toLowerCase();
+        });
+        filteredContent = filtered.map(p => ({ ...p, type: 'product' as const }));
+      }
 
       return {
-        filteredProducts: filtered.length > 0 ? filtered : state.products,
+        filteredProducts: filteredContent.length > 0 ? filteredContent : state.products.map(p => ({ ...p, type: 'product' as const })),
         currentProductIndex: 0,
       };
     }),

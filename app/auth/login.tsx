@@ -43,7 +43,7 @@ export default function Login() {
     <ImageBackground
       source={require('../../assets/bg.png')}
       style={styles.container}
-      resizeMode="cover"
+      resizeMode="contain"
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 32,
-    width: '80%',
-    height: '70%',
+    width: '90%',
+    height: '65%',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -158,12 +158,12 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
     marginBottom: 16,
   },
   title: {
-    fontSize: 40,
+    fontSize: 35,
     fontWeight: 'bold',
     color: '#000000',
   },
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '400',
     color: '#000000',
     marginBottom: 10,
@@ -184,11 +184,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D9D9D9',
     borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    fontSize: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: 18,
     color: '#000000',
-    minHeight: 56,
+    minHeight: 46,
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -197,9 +197,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D9D9D9',
     borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    minHeight: 56,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    minHeight: 46,
   },
   passwordInput: {
     flex: 1,
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 56,
+    height: 46,
     borderRadius: 28,
     marginTop: 12,
   },
@@ -226,11 +226,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   forgotPassword: {
-    alignItems: 'center',
     marginTop: 16,
   },
   forgotPasswordText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#000000',
     textDecorationLine: 'underline',
   },
@@ -246,7 +245,8 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 20,
-    color: '#00FF60',
+    color: '#6FFF25',
     fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

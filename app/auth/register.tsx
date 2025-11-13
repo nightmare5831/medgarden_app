@@ -78,10 +78,10 @@ export default function Register() {
               <Image source={{ uri: profileImage }} style={styles.profileImage} />
             ) : (
               <View style={styles.profilePlaceholder}>
-                <Ionicons
-                  name="person"
-                  size={50}
-                  color="#6FFF25"
+                <Image
+                  source={require('../../assets/profile.png')}
+                  style={styles.profileIconPlaceholder}
+                  resizeMode="contain"
                 />
               </View>
             )}
@@ -146,13 +146,13 @@ export default function Register() {
             <Text style={styles.label}>Tipo de conta</Text>
             <View style={styles.roleContainer}>
               <TouchableOpacity
-                style={[styles.roleButton, role === 'patient' && styles.roleButtonActive]}
+                style={[styles.roleButton, styles.roleButtonSmall, role === 'patient' && styles.roleButtonActive]}
                 onPress={() => setRole('patient')}
               >
-                <Ionicons
-                  name="document-text"
-                  size={32}
-                  color="#6FFF25"
+                <Image
+                  source={require('../../assets/pacient.png')}
+                  style={styles.roleIconImage}
+                  resizeMode="contain"
                 />
                 <Text style={[styles.roleButtonText, role === 'patient' && styles.roleButtonTextActive]}>
                   Paciente
@@ -160,13 +160,13 @@ export default function Register() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.roleButton, role === 'professional' && styles.roleButtonActive]}
+                style={[styles.roleButton, styles.roleButtonLarge, role === 'professional' && styles.roleButtonActive]}
                 onPress={() => setRole('professional')}
               >
-                <Ionicons
-                  name="person"
-                  size={32}
-                  color="#6FFF25"
+                <Image
+                  source={require('../../assets/profesional.png')}
+                  style={styles.roleIconImage}
+                  resizeMode="contain"
                 />
                 <Text style={[styles.roleButtonText, role === 'professional' && styles.roleButtonTextActive]}>
                   Profissional
@@ -174,13 +174,13 @@ export default function Register() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.roleButton, role === 'association' && styles.roleButtonActive]}
+                style={[styles.roleButton, styles.roleButtonLarge, role === 'association' && styles.roleButtonActive]}
                 onPress={() => setRole('association')}
               >
-                <Ionicons
-                  name="people"
-                  size={32}
-                  color="#6FFF25"
+                <Image
+                  source={require('../../assets/association.png')}
+                  style={styles.roleIconImage}
+                  resizeMode="contain"
                 />
                 <Text style={[styles.roleButtonText, role === 'association' && styles.roleButtonTextActive]}>
                   Associação
@@ -188,13 +188,13 @@ export default function Register() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.roleButton, role === 'store' && styles.roleButtonActive]}
+                style={[styles.roleButton, styles.roleButtonSmall, role === 'store' && styles.roleButtonActive]}
                 onPress={() => setRole('store')}
               >
-                <Ionicons
-                  name="storefront"
-                  size={32}
-                  color="#6FFF25"
+                <Image
+                  source={require('../../assets/products.png')}
+                  style={styles.roleIconImage}
+                  resizeMode="contain"
                 />
                 <Text style={[styles.roleButtonText, role === 'store' && styles.roleButtonTextActive]}>
                   Lojista
@@ -246,11 +246,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 24,
     paddingTop: 44,
+    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 44,
   },
   backButton: {
     marginRight: 12,
@@ -283,8 +284,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileIconPlaceholder: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
   },
   profileImage: {
     width: 100,
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '400',
     color: '#000000',
     marginBottom: 8,
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 20,
+    fontSize: 16,
     color: '#000000',
     padding: 0,
   },
@@ -335,18 +336,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#e5e7eb',
     borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 80,
+    minHeight: 60,
+  },
+  roleButtonSmall: {
+    flex: 0.8,
+  },
+  roleButtonLarge: {
+    flex: 1.2,
   },
   roleButtonActive: {
     borderColor: '#6FFF25',
     backgroundColor: '#E5FFD6',
   },
   roleButtonText: {
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: '500',
     color: '#000000',
     marginTop: 8,
@@ -359,6 +366,10 @@ const styles = StyleSheet.create({
   roleIcon: {
     width: '100%',
     height: '100%',
+  },
+  roleIconImage: {
+    width: 40,
+    height: 40,
   },
   termsContainer: {
     flexDirection: 'row',
@@ -385,7 +396,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   termsText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#000000',
     marginBottom: 4,
   },
@@ -394,7 +405,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   termsSubtext: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6b7280',
   },
   button: {
@@ -402,7 +413,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 56,
+    height: 36,
     borderRadius: 28,
     marginTop: 0,
     marginBottom: 24,
@@ -412,7 +423,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

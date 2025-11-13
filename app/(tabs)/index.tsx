@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   ImageBackground,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,19 +31,40 @@ export default function BuyerDashboard() {
     currentProductIndex,
     isLoading,
     loadProducts,
+    loadMessages,
     filterByCategory,
     nextProduct,
     previousProduct,
   } = useAppStore();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Load products on mount
+  // Load products and messages on mount
   useEffect(() => {
     loadProducts();
+    loadMessages();
   }, []);
 
-  const currentProduct = filteredProducts[currentProductIndex];
+  const currentItem = filteredProducts[currentProductIndex];
+
+  // Reset selected image when product changes
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [currentProductIndex]);
+
+  const handleShowDetail = () => {
+    setShowDetail(true);
+  };
+
+  const handleCloseDetail = () => {
+    setShowDetail(false);
+  };
+
+  const handleThumbnailClick = (index: number) => {
+    setSelectedImageIndex(index);
+  };
 
   const handleCategoryClick = (categoryKey: string) => {
     const category = CATEGORY_LABELS[categoryKey as keyof typeof CATEGORY_LABELS];
@@ -79,10 +101,14 @@ export default function BuyerDashboard() {
         {/* User Profile Header */}
         <View style={styles.userProfile}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getUserInitials()}</Text>
+            <Text style={styles.avatarText}>
+              {getUserInitials()}
+            </Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{currentUser?.name || 'Lucas Monte'}</Text>
+            <Text style={styles.userName}>
+              {currentUser?.name || 'Usuário'}
+            </Text>
             <View style={styles.statusBadge}>
               <Text style={styles.statusText}>
                 {currentUser?.role === 'patient' ? 'PACIENTE' :
@@ -94,38 +120,92 @@ export default function BuyerDashboard() {
           </View>
         </View>
 
-        {/* Product/Image Display Area */}
+        {/* Product/Message Display Area */}
         <View style={styles.productDisplay}>
           {isLoading ? (
             <ActivityIndicator size="large" color="#fff" />
-          ) : currentProduct ? (
-            <>
-              <Image
-                source={{ uri: currentProduct.thumbnail }}
-                style={styles.productImage}
-                resizeMode="cover"
-              />
-              <View style={styles.productInfoOverlay}>
-                <Text style={styles.productName} numberOfLines={1}>
-                  {currentProduct.name}
-                </Text>
-                <Text style={styles.productPrice}>
-                  R$ {currentProduct.price.toFixed(2)}
-                </Text>
+          ) : currentItem ? (
+            currentItem.type === 'product' ? (
+              <>
+                <Image
+                  source={{ uri: currentItem.images[selectedImageIndex] || currentItem.thumbnail }}
+                  style={styles.productImage}
+                  resizeMode="contain"
+                />
+                {/* Image Thumbnails */}
+                {showDetail && currentItem.images && currentItem.images.length > 0 && (
+                  <View style={styles.thumbnailsOverlay}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {currentItem.images.map((img, idx) => (
+                        <TouchableOpacity
+                          key={idx}
+                          style={[
+                            styles.thumbnailButton,
+                            idx === selectedImageIndex && styles.thumbnailButtonActive
+                          ]}
+                          onPress={() => handleThumbnailClick(idx)}
+                        >
+                          <Image
+                            source={{ uri: img }}
+                            style={styles.thumbnailImage}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.messageCard}>
+                <View style={styles.messageHeader}>
+                  <View style={styles.messageAvatar}>
+                    <Text style={styles.messageAvatarText}>
+                      {currentItem.ownerName?.substring(0, 2).toUpperCase() || 'U'}
+                    </Text>
+                  </View>
+                  <View style={styles.messageAuthor}>
+                    <Text style={styles.messageName}>{currentItem.ownerName}</Text>
+                    <Text style={styles.messageRole}>{currentItem.ownerRole}</Text>
+                  </View>
+                </View>
+                <Text style={styles.messageContent}>{currentItem.content}</Text>
+                <View style={styles.messageStats}>
+                  <View style={styles.messageStat}>
+                    <Ionicons name="chatbubble-outline" size={16} color="#fff" />
+                    <Text style={styles.messageStatText}>{currentItem.comments?.length || 0}</Text>
+                  </View>
+                  <View style={styles.messageStat}>
+                    <Ionicons name="heart" size={16} color="#ef4444" />
+                    <Text style={styles.messageStatText}>{currentItem.favorite?.length || 0}</Text>
+                  </View>
+                  <View style={styles.messageStat}>
+                    <Ionicons name="thumbs-up" size={16} color="#10b981" />
+                    <Text style={styles.messageStatText}>{currentItem.good?.length || 0}</Text>
+                  </View>
+                </View>
               </View>
-            </>
+            )
           ) : (
             <View style={styles.emptyProduct}>
               <Ionicons name="image-outline" size={80} color="#fff" />
-              <Text style={styles.emptyText}>Nenhum produto disponível</Text>
+              <Text style={styles.emptyText}>Nenhum conteúdo disponível</Text>
             </View>
           )}
         </View>
 
         {/* Navigation Controls Overlay */}
         <View style={styles.controlsOverlay}>
-          <TouchableOpacity style={styles.controlButton}>
-            <Ionicons name="ellipsis-horizontal" size={24} color="#000" />
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={showDetail ? handleCloseDetail : handleShowDetail}
+            disabled={!currentItem}
+          >
+            <Ionicons
+              name={showDetail ? "close" : "ellipsis-horizontal"}
+              size={24}
+              color="#000"
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -146,10 +226,12 @@ export default function BuyerDashboard() {
         </View>
       </ImageBackground>
 
-      {/* BOTTOM SECTION - 38.2% (Navigation Grid) */}
+      {/* BOTTOM SECTION - 38.2% (Navigation Grid or Detail View) */}
       <View style={styles.bottomSection}>
-        {/* LEFT SIDE - 60% (2x2 Category Grid) */}
-        <View style={styles.leftColumn}>
+        {!showDetail ? (
+          <>
+            {/* LEFT SIDE - 60% (2x2 Category Grid) */}
+            <View style={styles.leftColumn}>
           {/* Row 1 */}
           <View style={styles.gridRow}>
             <TouchableOpacity
@@ -159,7 +241,11 @@ export default function BuyerDashboard() {
               ]}
               onPress={() => handleCategoryClick('profissionais')}
             >
-              <Ionicons name="people-outline" size={40} color="#000" />
+              <Image
+                source={require('../../assets/profesional.png')}
+                style={styles.categoryImage}
+                resizeMode="contain"
+              />
               <Text style={styles.gridLabel}>Profissionais</Text>
             </TouchableOpacity>
 
@@ -172,7 +258,11 @@ export default function BuyerDashboard() {
               ]}
               onPress={() => handleCategoryClick('pacientes')}
             >
-              <Ionicons name="document-text-outline" size={40} color="#000" />
+              <Image
+                source={require('../../assets/pacient.png')}
+                style={styles.categoryImage}
+                resizeMode="contain"
+              />
               <Text style={styles.gridLabel}>Pacientes</Text>
             </TouchableOpacity>
           </View>
@@ -188,7 +278,11 @@ export default function BuyerDashboard() {
               ]}
               onPress={() => handleCategoryClick('associacoes')}
             >
-              <Ionicons name="people-circle-outline" size={40} color="#000" />
+              <Image
+                source={require('../../assets/association.png')}
+                style={styles.categoryImage}
+                resizeMode="contain"
+              />
               <Text style={styles.gridLabel}>Associações</Text>
             </TouchableOpacity>
 
@@ -201,7 +295,11 @@ export default function BuyerDashboard() {
               ]}
               onPress={() => handleCategoryClick('produtos')}
             >
-              <Ionicons name="storefront-outline" size={40} color="#000" />
+              <Image
+                source={require('../../assets/products.png')}
+                style={styles.categoryImage}
+                resizeMode="contain"
+              />
               <Text style={styles.gridLabel}>Produtos</Text>
             </TouchableOpacity>
           </View>
@@ -219,7 +317,11 @@ export default function BuyerDashboard() {
               onPress={() => router.push('/(tabs)/forum')}
             >
               <View style={styles.forumButton}>
-                <Ionicons name="chatbubbles" size={32} color="#fff" />
+                <Image
+                  source={require('../../assets/forum.png')}
+                  style={styles.forumImage}
+                  resizeMode="contain"
+                />
               </View>
               <Text style={styles.forumLabel}>Forum</Text>
             </TouchableOpacity>
@@ -234,7 +336,7 @@ export default function BuyerDashboard() {
               <View style={styles.profileButton}>
                 <Text style={styles.profileAvatarText}>{getUserInitials()}</Text>
               </View>
-              <Text style={styles.profileLabel}>Rodrigo</Text>
+              <Text style={styles.profileLabel}>{currentUser?.name?.split(' ')[0] || 'Perfil'}</Text>
             </TouchableOpacity>
           </View>
 
@@ -244,12 +346,124 @@ export default function BuyerDashboard() {
           <View style={styles.rightBottomSection}>
             <TouchableOpacity style={styles.postarButton}>
               <View style={styles.postarIconCircle}>
-                <Ionicons name="add" size={32} color="#000" />
+                <Image
+                  source={require('../../assets/post.png')}
+                  style={styles.postarImage}
+                  resizeMode="contain"
+                />
               </View>
               <Text style={styles.postarLabel}>Postar</Text>
             </TouchableOpacity>
           </View>
         </View>
+          </>
+        ) : (
+          /* DETAIL VIEW */
+          <View style={styles.detailView}>
+            <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
+              {currentItem && currentItem.type === 'product' ? (
+                /* Product Detail */
+                <>
+                  <View style={styles.detailHeader}>
+                    <View style={styles.detailBadgeRow}>
+                      {currentItem.featured && (
+                        <View style={styles.detailBadge}>
+                          <Ionicons name="checkmark-circle" size={12} color="#10b981" />
+                          <Text style={styles.detailBadgeText}>DESTAQUE</Text>
+                        </View>
+                      )}
+                      <View style={styles.detailRating}>
+                        <Ionicons name="star" size={16} color="#f59e0b" />
+                        <Text style={styles.detailRatingText}>{currentItem.rating.toFixed(1)}</Text>
+                        <Text style={styles.detailReviewCount}>({currentItem.reviewCount})</Text>
+                      </View>
+                      <Text style={styles.detailPrice}>R$ {currentItem.price.toFixed(2)}</Text>
+                    </View>
+                    <Text style={styles.detailName}>{currentItem.name}</Text>
+                    <Text style={styles.detailCategory}>Categoria: {currentItem.category}</Text>
+                  </View>
+
+                  <View style={styles.detailSection}>
+                    {currentItem.originalPrice && (
+                      <View style={styles.detailPriceInfo}>
+                        <Text style={styles.detailOriginalPrice}>
+                          De: R$ {currentItem.originalPrice.toFixed(2)}
+                        </Text>
+                        {currentItem.discount && (
+                          <Text style={styles.detailDiscount}>
+                            {currentItem.discount}% OFF
+                          </Text>
+                        )}
+                      </View>
+                    )}
+
+                    <View style={styles.detailShippingInfo}>
+                      <Ionicons
+                        name={currentItem.shipping.free ? "checkmark-circle" : "close-circle"}
+                        size={18}
+                        color={currentItem.shipping.free ? "#10b981" : "#ef4444"}
+                      />
+                      <Text style={styles.detailShippingText}>
+                        {currentItem.shipping.free ? 'Frete Grátis' : 'Frete Pago'} - Entrega em {currentItem.shipping.days} dias
+                      </Text>
+                    </View>
+
+                    <View style={styles.detailDescriptionSection}>
+                      <Text style={styles.detailSectionTitle}>Descrição</Text>
+                      <Text style={styles.detailDescription}>{currentItem.description}</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity style={styles.detailButton}>
+                    <Text style={styles.detailButtonText}>Contratar</Text>
+                  </TouchableOpacity>
+                </>
+              ) : currentItem && currentItem.type === 'message' ? (
+                /* Message Detail */
+                <>
+                  <View style={styles.detailHeader}>
+                    <View style={styles.messageDetailHeader}>
+                      <View style={styles.messageDetailAvatar}>
+                        <Text style={styles.messageDetailAvatarText}>
+                          {currentItem.ownerName?.substring(0, 2).toUpperCase() || 'U'}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text style={styles.detailName}>{currentItem.ownerName}</Text>
+                        <Text style={styles.messageDetailRole}>{currentItem.ownerRole}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailDescription}>{currentItem.content}</Text>
+                  </View>
+
+                  <View style={styles.messageDetailStats}>
+                    <View style={styles.messageDetailStat}>
+                      <Ionicons name="chatbubble" size={20} color="#6b7280" />
+                      <Text style={styles.messageDetailStatText}>
+                        {currentItem.comments?.length || 0} comentários
+                      </Text>
+                    </View>
+                    <View style={styles.messageDetailStat}>
+                      <Ionicons name="heart" size={20} color="#ef4444" />
+                      <Text style={styles.messageDetailStatText}>
+                        {currentItem.favorite?.length || 0} favoritos
+                      </Text>
+                    </View>
+                    <View style={styles.messageDetailStat}>
+                      <Ionicons name="thumbs-up" size={20} color="#10b981" />
+                      <Text style={styles.messageDetailStatText}>
+                        {currentItem.good?.length || 0} curtidas
+                      </Text>
+                    </View>
+                  </View>
+                </>
+              ) : null}
+            </ScrollView>
+          </View>
+        )}
       </View>
 
       {/* Product Counter */}
@@ -311,7 +525,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6fee5f',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 50,
     alignSelf: 'flex-start',
   },
   statusText: {
@@ -322,37 +536,37 @@ const styles = StyleSheet.create({
   },
   productDisplay: {
     flex: 1,
-    marginTop: 90,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
   productImage: {
-    width: '70%',
-    height: '80%',
-    borderRadius: 12,
-    transform: [{ rotate: '-5deg' }],
+    width: '100%',
+    height: '100%',
   },
-  productInfoOverlay: {
+  thumbnailsOverlay: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 90,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingVertical: 8,
     paddingHorizontal: 20,
   },
-  productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 4,
+  thumbnailButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 12,
+    marginRight: 8,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    overflow: 'hidden',
   },
-  productPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6fee5f',
+  thumbnailButtonActive: {
+    borderColor: '#6fee5f',
+    borderWidth: 3,
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
   emptyProduct: {
     justifyContent: 'center',
@@ -420,6 +634,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
+  categoryImage: {
+    width: 60,
+    height: 60,
+  },
 
   // RIGHT COLUMN - 40% (Forum, Profile, Postar)
   rightColumn: {
@@ -442,23 +660,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   forumButton: {
-    backgroundColor: '#10b981',
-    width: 65,
-    height: 65,
-    borderRadius: 40,
+    width: 50,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#10b981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-    marginBottom: 6,
   },
   forumLabel: {
     fontSize: 12,
     fontWeight: '600',
     color: '#000',
+  },
+  forumImage: {
+    width: 55,
+    height: 55,
   },
   profileCell: {
     flex: 1,
@@ -466,21 +680,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileButton: {
-    width: 65,
-    height: 65,
+    width: 60,
+    height: 60,
     backgroundColor: '#3b82f6',
-    borderRadius: 40,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
     marginBottom: 6,
   },
   profileAvatarText: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
   },
@@ -502,23 +711,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   postarIconCircle: {
-    backgroundColor: '#6fee5f',
     width: 64,
     height: 64,
     borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    marginBottom: 8,
   },
   postarLabel: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#000',
+  },
+  postarImage: {
+    width: 60,
+    height: 60,
   },
 
   // Dividers
@@ -545,5 +751,257 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#fff',
+  },
+
+  // Message Card Styles
+  messageCard: {
+    width: '85%',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  messageAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  messageAvatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  messageAuthor: {
+    flex: 1,
+  },
+  messageName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  messageRole: {
+    fontSize: 12,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+  },
+  messageContent: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  messageStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  messageStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  messageStatText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+
+  // Detail View Styles
+  detailView: {
+    flex: 1,
+    backgroundColor: '#fff',
+    position: 'relative',
+  },
+  detailScroll: {
+    flex: 1,
+    padding: 20,
+  },
+  detailHeader: {
+    marginBottom: 16,
+  },
+  detailBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  detailBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#d1fae5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  detailBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#065f46',
+  },
+  detailRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  detailRatingText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  detailPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginLeft: 'auto',
+  },
+  detailName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  detailCategory: {
+    fontSize: 12,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+  },
+  detailReviewCount: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginLeft: 4,
+  },
+  detailSection: {
+    marginBottom: 20,
+  },
+  detailPriceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fef3c7',
+    borderRadius: 8,
+  },
+  detailOriginalPrice: {
+    fontSize: 14,
+    color: '#92400e',
+    textDecorationLine: 'line-through',
+  },
+  detailDiscount: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#ef4444',
+  },
+  detailShippingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+  },
+  detailShippingText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  detailDescriptionSection: {
+    marginTop: 8,
+  },
+  detailSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  detailTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  detailTag: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  detailTagText: {
+    fontSize: 12,
+    color: '#374151',
+  },
+  detailDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#6b7280',
+  },
+  detailButton: {
+    backgroundColor: '#000',
+    paddingVertical: 10,
+    borderRadius: 50,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  detailButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  messageDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  messageDetailAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageDetailAvatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  messageDetailRole: {
+    fontSize: 12,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+  },
+  messageDetailStats: {
+    flexDirection: 'column',
+    gap: 12,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  messageDetailStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  messageDetailStatText: {
+    fontSize: 14,
+    color: '#374151',
   },
 });

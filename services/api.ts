@@ -133,7 +133,6 @@ function transformProduct(apiProduct: any): Product {
     images: images,
     thumbnail: images[0] || '',
     category: apiProduct.category || 'Uncategorized',
-    subcategory: apiProduct.subcategory,
     rating: 4.5, // TODO: Add rating system to backend
     reviewCount: 0, // TODO: Add reviews to backend
     featured: apiProduct.status === 'approved' && apiProduct.is_active,

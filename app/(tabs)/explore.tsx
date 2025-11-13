@@ -7,32 +7,18 @@ import { useAppStore } from '../../store/useAppStore';
 const { width } = Dimensions.get('window');
 const PRODUCT_WIDTH = (width - 48) / 2;
 
-const categories = [
-  { id: 'fashion', name: 'Moda', icon: 'shirt-outline', color: '#f59e0b' },
-  { id: 'beauty', name: 'Beleza', icon: 'sparkles-outline', color: '#ec4899' },
-  { id: 'sports', name: 'Esporte', icon: 'fitness-outline', color: '#3b82f6' },
-  { id: 'tech', name: 'Tech', icon: 'phone-portrait-outline', color: '#8b5cf6' },
-  { id: 'home', name: 'Casa', icon: 'home-outline', color: '#10b981' },
-];
-
 export default function ExplorarScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const products = useAppStore((state) => state.products);
 
   const filteredProdutos = useMemo(() => {
-    let filtered = products;
-    if (selectedCategory) {
-      filtered = filtered.filter(p => p.category === selectedCategory);
-    }
-    if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    return filtered;
-  }, [products, selectedCategory, searchQuery]);
+    if (!searchQuery) return products;
+
+    return products.filter(p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [products, searchQuery]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -56,52 +42,9 @@ export default function ExplorarScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.categoriesSection}>
-          <Text style={styles.categoryTitle}>Categorias</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll}>
-            <TouchableOpacity
-              onPress={() => setSelectedCategory(null)}
-              style={[styles.categoryChip, selectedCategory === null && styles.categoryChipActive]}
-            >
-              <Text style={[styles.categoryChipText, selectedCategory === null && styles.categoryChipTextActive]}>
-                Todos
-              </Text>
-            </TouchableOpacity>
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                onPress={() => setSelectedCategory(category.id)}
-                style={[
-                  styles.categoryChip,
-                  selectedCategory === category.id && {
-                    backgroundColor: category.color,
-                    borderColor: category.color,
-                  }
-                ]}
-              >
-                <Ionicons
-                  name={category.icon}
-                  size={18}
-                  color={selectedCategory === category.id ? '#fff' : '#374151'}
-                  style={styles.categoryIcon}
-                />
-                <Text style={[
-                  styles.categoryChipText,
-                  selectedCategory === category.id && { color: '#fff' }
-                ]}>
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
         <View style={styles.productsSection}>
           <Text style={styles.sectionTitle}>
-            {selectedCategory
-              ? `${categories.find(c => c.id === selectedCategory)?.name} Produtos (${filteredProdutos.length})`
-              : `Todos Produtos (${filteredProdutos.length})`
-            }
+            Todos Produtos ({filteredProdutos.length})
           </Text>
           {filteredProdutos.length > 0 ? (
             <View style={styles.productGrid}>
@@ -181,30 +124,6 @@ const styles = StyleSheet.create({
   },
   searchIcon: { marginRight: 8 },
   searchInput: { flex: 1, fontSize: 16, color: "#111827" },
-  categoriesSection: { backgroundColor: "#ffffff", paddingVertical: 16, marginBottom: 8 },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#111827",
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  categoriesScroll: { paddingHorizontal: 16 },
-  categoryChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: "#e5e7eb",
-    backgroundColor: "#ffffff",
-    marginRight: 8,
-  },
-  categoryChipActive: { backgroundColor: "#3b82f6", borderColor: "#3b82f6" },
-  categoryIcon: { marginRight: 4 },
-  categoryChipText: { fontSize: 14, fontWeight: "600", color: "#374151" },
-  categoryChipTextActive: { color: "#ffffff" },
   productsSection: { padding: 16 },
   content: { flex: 1, padding: 16 },
   section: { marginBottom: 24 },
