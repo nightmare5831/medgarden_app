@@ -34,6 +34,7 @@ interface AppState {
   currentFilterSet: FilterConfig[];
   filteredProducts: ContentItem[];
   selectedMediaIndex: number;
+  currentCategory: string | null;
 
   // Auth Actions
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
@@ -84,6 +85,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentFilterSet: filterTree.root,
   filteredProducts: [],
   selectedMediaIndex: 0,
+  currentCategory: null,
 
   // Auth actions
   login: async (email, password, remember = false) => {
@@ -212,12 +214,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Load messages from API
   loadMessages: async () => {
-    const { authToken } = get();
+    const { authToken, currentCategory, filterByCategory } = get();
     if (!authToken) return;
 
     try {
       const messages = await messageApi.getAll(authToken);
       set({ messages });
+
+      // Re-apply current category filter to update filteredProducts with new messages
+      if (currentCategory) {
+        filterByCategory(currentCategory);
+      }
     } catch (error) {
       console.error('Failed to load messages:', error);
     }
@@ -334,6 +341,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         return {
           filteredProducts: allContent,
           currentProductIndex: 0,
+          currentCategory: null,
         };
       }
 
@@ -372,6 +380,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         filteredProducts: filteredContent.length > 0 ? filteredContent : state.products.map(p => ({ ...p, type: 'product' as const })),
         currentProductIndex: 0,
+        currentCategory: category,
       };
     }),
 }));

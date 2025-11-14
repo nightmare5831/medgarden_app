@@ -12,6 +12,7 @@ import { ProductDisplay } from '../../components/home/ProductDisplay';
 import { NavigationControls } from '../../components/home/NavigationControls';
 import { BottomSection } from '../../components/home/BottomSection';
 import { DetailView } from '../../components/home/DetailView';
+import { messagesChannel } from '../../services/pusher';
 
 const GOLDEN_RATIO = 0.618;
 
@@ -44,6 +45,19 @@ export default function BuyerDashboard() {
   useEffect(() => {
     loadProducts();
     loadMessages();
+  }, []);
+
+  // Listen to Pusher events for real-time message updates
+  useEffect(() => {
+    const handleMessageUpdate = () => {
+      loadMessages(); // Reload messages when any message changes
+    };
+
+    messagesChannel.bind('MessageUpdated', handleMessageUpdate);
+
+    return () => {
+      messagesChannel.unbind('MessageUpdated', handleMessageUpdate);
+    };
   }, []);
 
   const currentItem = filteredProducts[currentProductIndex];

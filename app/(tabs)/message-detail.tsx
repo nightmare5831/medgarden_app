@@ -10,11 +10,12 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../store/useAppStore';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { messageApi, Message } from '../../services/api';
 import { messagesChannel } from '../../services/pusher';
 
@@ -25,30 +26,41 @@ export default function MessageDetail() {
   const [message, setMessage] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!currentUser?.name) return 'U';
+    const names = currentUser.name.split(' ');
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    }
+    return currentUser.name.substring(0, 2).toUpperCase();
+  };
+
+  const handleImagePicker = () => {
+    Alert.alert('Adicionar Imagem', 'Funcionalidade de imagem será implementada em breve!');
+  };
+
   useEffect(() => {
     loadMessage();
   }, [id]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadMessage(true);
+  useEffect(() => {
+    if (!authToken || !id) return;
 
-      // Listen to Pusher events for real-time updates
-      const handleMessageUpdate = (data: any) => {
-        console.log('Pusher event:', data);
-        // Only refresh if it's for this message
-        if (data.messageId.toString() === id) {
-          loadMessage(false); // Silent refresh
-        }
-      };
+    // Listen to Pusher events for real-time updates
+    const handleMessageUpdate = (data: any) => {
+      // Only refresh if it's for this message
+      if (data.messageId && data.messageId.toString() === id?.toString()) {
+        loadMessage(false); // Silent refresh
+      }
+    };
 
-      messagesChannel.bind('MessageUpdated', handleMessageUpdate);
+    messagesChannel.bind('MessageUpdated', handleMessageUpdate);
 
-      return () => {
-        messagesChannel.unbind('MessageUpdated', handleMessageUpdate);
-      };
-    }, [id, authToken])
-  );
+    return () => {
+      messagesChannel.unbind('MessageUpdated', handleMessageUpdate);
+    };
+  }, [id, authToken]);
 
   const loadMessage = async (showLoading = true) => {
     if (!authToken) return;
@@ -225,22 +237,41 @@ export default function MessageDetail() {
 
         {/* Comment Input */}
         {!loading && message && (
-          <View style={styles.commentInputContainer}>
-          <TextInput
-            style={styles.commentInput}
-            placeholder="Escreva um comentário..."
-            value={commentText}
-            onChangeText={setCommentText}
-            multiline
-            maxLength={500}
-          />
-          <TouchableOpacity
-            style={[styles.sendButton, !commentText.trim() && styles.sendButtonDisabled]}
-            onPress={handlePostComment}
-            disabled={!commentText.trim()}
-          >
-            <Ionicons name="send" size={20} color={commentText.trim() ? '#2563eb' : '#9ca3af'} />
-          </TouchableOpacity>
+          <View style={styles.commentInputSection}>
+            <View style={styles.commentInputContainer}>
+              {/* User Avatar */}
+              <View style={styles.inputAvatar}>
+                <Text style={styles.inputAvatarText}>{getUserInitials()}</Text>
+              </View>
+
+              {/* Text Input */}
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Digite sua mensagem"
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+                maxLength={500}
+              />
+
+              {/* Image Button */}
+              <TouchableOpacity style={styles.imageButton} onPress={handleImagePicker}>
+                <Ionicons name="image-outline" size={22} color="#9ca3af" />
+              </TouchableOpacity>
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={[styles.submitButton, !commentText.trim() && styles.submitButtonDisabled]}
+                onPress={handlePostComment}
+                disabled={!commentText.trim()}
+              >
+                <Image
+                  source={require('../../assets/submit.png')}
+                  style={styles.submitIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </KeyboardAvoidingView>
@@ -449,23 +480,63 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 20,
   },
+  commentInputSection: {
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+    paddingTop: 8,
+    backgroundColor: 'transparent',
+  },
   commentInputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     backgroundColor: '#ffffff',
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 25,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  inputAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputAvatarText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#ffffff',
   },
   commentInput: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    maxHeight: 100,
+    fontSize: 14,
+    maxHeight: 60,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  imageButton: {
+    padding: 4,
+  },
+  submitButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.4,
+  },
+  submitIcon: {
+    width: 28,
+    height: 28,
   },
   sendButton: {
     width: 40,

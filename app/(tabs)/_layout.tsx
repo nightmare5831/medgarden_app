@@ -9,7 +9,6 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" />
-      <Tabs.Screen name="seller-dashboard" />
       <Tabs.Screen name="forum" />
       <Tabs.Screen name="message-detail" />
       <Tabs.Screen name="explore" />

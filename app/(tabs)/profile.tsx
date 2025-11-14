@@ -1,13 +1,50 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { router } from 'expo-router';
+import { messageApi, Message } from '../../services/api';
+import { messagesChannel } from '../../services/pusher';
 
 export default function PerfilScreen() {
-  const { currentUser, logout } = useAppStore();
-  const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'purchases'>('posts');
+  const { currentUser, authToken, logout } = useAppStore();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadMessages();
+  }, []);
+
+  useEffect(() => {
+    if (!authToken) return;
+
+    // Listen to Pusher events for real-time updates
+    const handleMessageUpdate = () => {
+      loadMessages(); // Reload messages when any message changes
+    };
+
+    messagesChannel.bind('MessageUpdated', handleMessageUpdate);
+
+    return () => {
+      messagesChannel.unbind('MessageUpdated', handleMessageUpdate);
+    };
+  }, [authToken]);
+
+  const loadMessages = async () => {
+    if (!authToken) return;
+    try {
+      setLoading(true);
+      const data = await messageApi.getAll(authToken);
+      // Filter to show all messages of current user
+      const userMessages = data.filter(msg => msg.owner === currentUser?.email);
+      setMessages(userMessages);
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -32,109 +69,152 @@ export default function PerfilScreen() {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={24} color="#111827" />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Perfil</Text>
+          <View style={{ width: 24 }} />
         </View>
-        <View style={styles.emptyState}>
+        <View style={styles.centerContent}>
           <Text style={styles.emptyStateText}>Carregando...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  const isProfessional = currentUser.role === 'professional';
+
+  // Helper function to get role display text
+  const getRoleText = () => {
+    if (currentUser.role === 'professional') return 'Profissional';
+    if (currentUser.role === 'patient') return 'Paciente';
+    if (currentUser.role === 'association') return 'Associação';
+    if (currentUser.role === 'store') return 'Loja';
+    if (currentUser.role === 'super_admin') return 'Administrador';
+    return 'Usuário';
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Perfil</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={24} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Perfil: {currentUser.name}</Text>
+        <TouchableOpacity onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={24} color="#ef4444" />
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Profile Section */}
         <View style={styles.profileSection}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </Text>
-              </View>
-              {currentUser.isPremium && (
-                <View style={styles.premiumBadge}>
-                  <Ionicons name="crown" size={12} color="#f59e0b" />
-                </View>
-              )}
+          {/* Avatar with Verified Badge */}
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              </Text>
             </View>
-
-            <View style={styles.userInfo}>
-              <View style={styles.nameContainer}>
-                <Text style={styles.userName}>{currentUser.name}</Text>
-                <View style={styles.roleBadge}>
-                  <Text style={styles.roleBadgeText}>{currentUser.role === 'buyer' ? 'Paciente' : 'Profissional'}</Text>
-                </View>
+            {isProfessional && (
+              <View style={styles.verifiedBadge}>
+                <Ionicons name="checkmark" size={16} color="#ffffff" />
               </View>
-              <Text style={styles.userEmail}>{currentUser.email}</Text>
-              {currentUser.phone && (
-                <Text style={styles.userPhone}>{currentUser.phone}</Text>
-              )}
-            </View>
+            )}
           </View>
 
+          {/* Name */}
+          <Text style={styles.userName}>{currentUser.name}</Text>
 
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Editar Perfil</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton}>
-              <Ionicons name="share-outline" size={20} color="#3b82f6" />
-            </TouchableOpacity>
+          {/* Role Badge */}
+          <View style={styles.professionalBadge}>
+            <Text style={styles.professionalBadgeText}>{getRoleText().toUpperCase()}</Text>
           </View>
+
+          {/* Rating and Price - Show for all users with mock data */}
+          <View style={styles.ratingPriceContainer}>
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={20} color="#22c55e" />
+              <Text style={styles.ratingText}>4.5</Text>
+            </View>
+            <Text style={styles.priceText}>R$ 250/h</Text>
+          </View>
+
+          {/* First Message */}
+          {loading ? (
+            <ActivityIndicator size="small" color="#2563eb" style={{ marginTop: 16 }} />
+          ) : messages.length > 0 ? (
+            <Text style={styles.firstMessage}>
+              {messages[0].content}
+            </Text>
+          ) : null}
         </View>
 
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'posts' && styles.tabActive]}
-            onPress={() => setActiveTab('posts')}
-          >
-            <Text style={[styles.tabText, activeTab === 'posts' && styles.tabTextActive]}>
-              Posts
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'saved' && styles.tabActive]}
-            onPress={() => setActiveTab('saved')}
-          >
-            <Text style={[styles.tabText, activeTab === 'saved' && styles.tabTextActive]}>
-              Salvos
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'purchases' && styles.tabActive]}
-            onPress={() => setActiveTab('purchases')}
-          >
-            <Text style={[styles.tabText, activeTab === 'purchases' && styles.tabTextActive]}>
-              Compras
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Recent Messages Section */}
+        <View style={styles.messagesSection}>
+          <Text style={styles.sectionTitle}>Mensagens recentes</Text>
 
-        <View style={styles.tabContent}>
-          {activeTab === 'posts' && (
-            <View style={styles.emptyState}>
-              <Ionicons name="create-outline" size={48} color="#d1d5db" />
-              <Text style={styles.emptyStateText}>No posts yet</Text>
+          {loading ? (
+            <View style={styles.centerContent}>
+              <ActivityIndicator size="large" color="#2563eb" />
             </View>
-          )}
-          {activeTab === 'saved' && (
-            <View style={styles.emptyState}>
-              <Ionicons name="heart-outline" size={48} color="#d1d5db" />
-              <Text style={styles.emptyStateText}>No saved items</Text>
-            </View>
-          )}
-          {activeTab === 'purchases' && (
-            <View style={styles.emptyState}>
-              <Ionicons name="bag-outline" size={48} color="#d1d5db" />
-              <Text style={styles.emptyStateText}>No purchases yet</Text>
+          ) : messages.length > 0 ? (
+            messages.map((message: Message) => (
+              <View key={message.id} style={styles.messageCard}>
+                <View style={styles.messageHeader}>
+                  <View style={styles.messageAvatarContainer}>
+                    <View style={styles.messageAvatar}>
+                      <Text style={styles.messageAvatarText}>
+                        {currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      </Text>
+                    </View>
+                    {isProfessional && (
+                      <View style={styles.messageVerifiedBadge}>
+                        <Ionicons name="checkmark" size={10} color="#ffffff" />
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.messageInfo}>
+                    <View style={styles.messageNameRow}>
+                      <Text style={styles.messageUserName}>{currentUser.name}</Text>
+                      {isProfessional && (
+                        <View style={styles.messageProfessionalBadge}>
+                          <Text style={styles.messageProfessionalBadgeText}>{getRoleText().toUpperCase()}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.messageTime}>• {message.timestamp}</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.messageText}>{message.content}</Text>
+
+                <View style={styles.messageActions}>
+                  <View style={styles.messageActionItem}>
+                    <Ionicons name="chatbubble-outline" size={16} color="#6b7280" />
+                    <Text style={styles.messageActionText}>{message.comments.length}</Text>
+                  </View>
+                  <View style={styles.messageActionItem}>
+                    <Ionicons name="heart" size={16} color="#ef4444" />
+                    <Text style={styles.messageActionText}>{message.favorite.length}</Text>
+                  </View>
+                  <View style={styles.messageActionItem}>
+                    <Ionicons name="thumbs-up" size={16} color={message.good.length > 0 ? '#3b82f6' : '#d1d5db'} />
+                    <Text style={styles.messageActionText}>{message.good.length}</Text>
+                  </View>
+                  <View style={styles.messageActionItem}>
+                    <Ionicons name="thumbs-down" size={16} color={message.bad.length > 0 ? '#6b7280' : '#d1d5db'} />
+                    <Text style={styles.messageActionText}>{message.bad.length}</Text>
+                  </View>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyMessageState}>
+              <Ionicons name="chatbubbles-outline" size={48} color="#d1d5db" />
+              <Text style={styles.emptyStateText}>Nenhuma mensagem ainda</Text>
             </View>
           )}
         </View>
@@ -146,192 +226,247 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f5f5f5',
   },
   header: {
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 3,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#111827',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 24,
   },
-  logoutButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fee2e2',
+  centerContent: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   profileSection: {
     backgroundColor: '#ffffff',
-    padding: 20,
-    marginBottom: 8,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    alignItems: 'center',
     marginBottom: 16,
   },
   avatarContainer: {
     position: 'relative',
+    marginBottom: 16,
   },
   avatar: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: '#3b82f6',
+    borderRadius: 60,
+    backgroundColor: '#d1d5db',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    fontSize: 32,
+    fontSize: 25,
     fontWeight: 'bold',
     color: '#ffffff',
   },
-  premiumBadge: {
+  verifiedBadge: {
     position: 'absolute',
-    bottom: -4,
-    right: -4,
+    top: 0,
+    right: 0,
     width: 24,
     height: 24,
+    borderRadius: 16,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  roleText: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  professionalBadge: {
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    borderRadius: 50,
+    marginTop:10,
+    marginBottom: 16,
+  },
+  professionalBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+  ratingPriceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 24,
+    marginBottom: 16,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  priceText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  categoriesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+    justifyContent: 'center',
+  },
+  categoryPill: {
+    backgroundColor: '#e5e7eb',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  categoryPillText: {
+    fontSize: 12,
+    color: '#4b5563',
+  },
+  description: {
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  firstMessage: {
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  messagesSection: {
+    backgroundColor: '#ffffff',
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  messageCard: {
+    backgroundColor: '#f9fafb',
     borderRadius: 12,
-    backgroundColor: '#fef3c7',
+    padding: 16,
+    marginBottom: 12,
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  messageAvatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  messageAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#d1d5db',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageAvatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  messageVerifiedBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#22c55e',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#ffffff',
   },
-  userInfo: {
-    marginLeft: 16,
+  messageInfo: {
     flex: 1,
   },
-  nameContainer: {
+  messageNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 8,
+    marginBottom: 2,
   },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  messageUserName: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#111827',
   },
-  roleBadge: {
-    backgroundColor: '#dbeafe',
-    borderRadius: 12,
+  messageProfessionalBadge: {
+    backgroundColor: '#22c55e',
     paddingHorizontal: 8,
     paddingVertical: 2,
-    marginLeft: 8,
+    borderRadius: 3,
   },
-  roleBadgeText: {
-    fontSize: 10,
+  messageProfessionalBadgeText: {
+    fontSize: 9,
     fontWeight: 'bold',
-    color: '#2563eb',
-  },
-  userHandle: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-  userPhone: {
-    fontSize: 14,
-    color: '#9ca3af',
-    marginTop: 2,
-  },
-  userBio: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: '#3b82f6',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#ffffff',
+    letterSpacing: 0.3,
   },
-  secondaryButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
+  messageTime: {
+    fontSize: 12,
+    color: '#9ca3af',
   },
-  tabsContainer: {
-    backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: '#3b82f6',
-  },
-  tabText: {
+  messageText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
+    color: '#4b5563',
+    lineHeight: 20,
+    marginBottom: 12,
   },
-  tabTextActive: {
-    color: '#3b82f6',
+  messageActions: {
+    flexDirection: 'row',
+    gap: 16,
   },
-  tabContent: {
-    padding: 16,
-  },
-  emptyState: {
+  messageActionItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 60,
+    gap: 4,
+  },
+  messageActionText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  emptyMessageState: {
+    alignItems: 'center',
+    paddingVertical: 40,
   },
   emptyStateText: {
     fontSize: 14,

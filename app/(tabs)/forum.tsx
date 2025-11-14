@@ -8,11 +8,12 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../store/useAppStore';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { messageApi, Message } from '../../services/api';
 import { messagesChannel } from '../../services/pusher';
 
@@ -32,21 +33,20 @@ export default function Forum() {
     loadMessages();
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      // Listen to Pusher events for real-time updates
-      const handleMessageUpdate = (data: any) => {
-        console.log('Pusher event:', data);
-        loadMessages(false); // Silent refresh when any message changes
-      };
+  useEffect(() => {
+    if (!authToken) return;
 
-      messagesChannel.bind('MessageUpdated', handleMessageUpdate);
+    // Listen to Pusher events for real-time updates
+    const handleMessageUpdate = () => {
+      loadMessages(false); // Silent refresh when any message changes
+    };
 
-      return () => {
-        messagesChannel.unbind('MessageUpdated', handleMessageUpdate);
-      };
-    }, [authToken])
-  );
+    messagesChannel.bind('MessageUpdated', handleMessageUpdate);
+
+    return () => {
+      messagesChannel.unbind('MessageUpdated', handleMessageUpdate);
+    };
+  }, [authToken]);
 
   const filteredMessages = messages.filter((message) => {
     // Filter by tab
@@ -359,7 +359,13 @@ export default function Forum() {
           style={styles.createButton}
           onPress={() => setShowNewMessage(true)}
         >
-          <Ionicons name="add" size={28} color="#ffffff" />
+          <View style={styles.postarIconCircle}>
+            <Image
+              source={require('../../assets/post.png')}
+              style={styles.postarImage}
+              resizeMode="contain"
+            />
+          </View>
         </TouchableOpacity>
       )}
 
@@ -734,19 +740,27 @@ const styles = StyleSheet.create({
   },
   createButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#16a34a',
+    bottom: 30,
+    right: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
+  },
+  postarIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postarLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: 4,
+  },
+  postarImage: {
+    width: 56,
+    height: 56,
   },
   newMessageContainer: {
     position: 'absolute',
