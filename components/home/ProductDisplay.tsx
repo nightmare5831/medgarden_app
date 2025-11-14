@@ -107,10 +107,6 @@ export const ProductDisplay: React.FC<ProductDisplayProps> = ({
               <Text style={styles.messageStatText}>{currentItem.favorite?.length || 0}</Text>
             </View>
             <View style={styles.messageStat}>
-              <Ionicons name="thumbs-up" size={16} color="#10b981" />
-              <Text style={styles.messageStatText}>{currentItem.good?.length || 0}</Text>
-            </View>
-            <View style={styles.messageStat}>
               <Ionicons name="chatbubble" size={16} color="#6b7280" />
               <Text style={styles.messageStatText}>{currentItem.comments?.length || 0}</Text>
             </View>

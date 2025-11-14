@@ -326,14 +326,6 @@ export default function Forum() {
                     <Ionicons name="heart" size={16} color={message.favorite.length > 0 ? '#ef4444' : '#d1d5db'} />
                     <Text style={styles.postStatText}>{message.favorite.length}</Text>
                   </View>
-                  <View style={styles.postStat}>
-                    <Ionicons name="thumbs-up" size={16} color={message.good.length > 0 ? '#3b82f6' : '#d1d5db'} />
-                    <Text style={styles.postStatText}>{message.good.length}</Text>
-                  </View>
-                  <View style={styles.postStat}>
-                    <Ionicons name="thumbs-down" size={16} color={message.bad.length > 0 ? '#6b7280' : '#d1d5db'} />
-                    <Text style={styles.postStatText}>{message.bad.length}</Text>
-                  </View>
                 </View>
                 </TouchableOpacity>
               </View>

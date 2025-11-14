@@ -187,16 +187,6 @@ export default function MessageDetail() {
                 <Text style={styles.interactionText}>{message.favorite.length}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.interactionButton} onPress={() => handleInteraction('good')}>
-                <Ionicons name={isGood ? 'thumbs-up' : 'thumbs-up-outline'} size={22} color={isGood ? '#3b82f6' : '#6b7280'} />
-                <Text style={styles.interactionText}>{message.good.length}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.interactionButton} onPress={() => handleInteraction('bad')}>
-                <Ionicons name={isBad ? 'thumbs-down' : 'thumbs-down-outline'} size={22} color={isBad ? '#6b7280' : '#9ca3af'} />
-                <Text style={styles.interactionText}>{message.bad.length}</Text>
-              </TouchableOpacity>
-
               <View style={styles.interactionButton}>
                 <Ionicons name="chatbubble-outline" size={22} color="#6b7280" />
                 <Text style={styles.interactionText}>{message.comments.length}</Text>

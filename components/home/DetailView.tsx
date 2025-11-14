@@ -148,15 +148,6 @@ export const DetailView: React.FC<DetailViewProps> = ({ currentItem, onMessageUp
                   <Text style={styles.interactionText}>{currentItem.favorite?.length || 0}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.interactionButton} onPress={() => handleInteraction('good')}>
-                  <Ionicons
-                    name={currentItem.good?.includes(currentUser?.email || '') ? 'thumbs-up' : 'thumbs-up-outline'}
-                    size={20}
-                    color={currentItem.good?.includes(currentUser?.email || '') ? '#10b981' : '#6b7280'}
-                  />
-                  <Text style={styles.interactionText}>{currentItem.good?.length || 0}</Text>
-                </TouchableOpacity>
-
                 <View style={styles.interactionButton}>
                   <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
                   <Text style={styles.interactionText}>{currentItem.comments?.length || 0}</Text>
