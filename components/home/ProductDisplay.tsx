@@ -96,6 +96,49 @@ export const ProductDisplay: React.FC<ProductDisplayProps> = ({
         style={styles.productImage}
         resizeMode="contain"
       />
+      {!showDetail && (
+        <View style={styles.messageInfoOverlay}>
+          <Text style={styles.messageContent} numberOfLines={4}>
+            {currentItem.content}
+          </Text>
+          <View style={styles.messageStats}>
+            <View style={styles.messageStat}>
+              <Ionicons name="heart" size={16} color="#ef4444" />
+              <Text style={styles.messageStatText}>{currentItem.favorite?.length || 0}</Text>
+            </View>
+            <View style={styles.messageStat}>
+              <Ionicons name="thumbs-up" size={16} color="#10b981" />
+              <Text style={styles.messageStatText}>{currentItem.good?.length || 0}</Text>
+            </View>
+            <View style={styles.messageStat}>
+              <Ionicons name="chatbubble" size={16} color="#6b7280" />
+              <Text style={styles.messageStatText}>{currentItem.comments?.length || 0}</Text>
+            </View>
+          </View>
+        </View>
+      )}
+      {showDetail && (
+        <View style={styles.thumbnailsOverlay}>
+          <View style={styles.thumbnailContainer}>
+            {[0, 1, 2].map((idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.thumbnailButton,
+                  idx === selectedImageIndex && styles.thumbnailButtonActive
+                ]}
+                onPress={() => onThumbnailClick(idx)}
+              >
+                <Image
+                  source={require('../../assets/pbg.png')}
+                  style={styles.thumbnailImage}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -113,17 +156,17 @@ const styles = StyleSheet.create({
   },
   thumbnailsOverlay: {
     position: 'absolute',
-    bottom: 70,
+    bottom: 80,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     zIndex: 100,
   },
   thumbnailContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     gap: 12,
   },
   thumbnailButton: {
@@ -152,5 +195,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     marginTop: 12,
+  },
+  messageInfoOverlay: {
+    position: 'absolute',
+    bottom: 80,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  messageContent: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  messageStats: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 8,
+  },
+  messageStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  messageStatText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
   },
 });

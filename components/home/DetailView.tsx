@@ -67,7 +67,7 @@ export const DetailView: React.FC<DetailViewProps> = ({ currentItem, onMessageUp
     <View style={styles.detailView}>
       <ScrollView
         style={styles.detailScroll}
-        contentContainerStyle={isMessageType ? styles.detailScrollContent : undefined}
+        contentContainerStyle={styles.detailScrollContent}
         showsVerticalScrollIndicator={false}
       >
         {currentItem && currentItem.type === 'product' ? (
@@ -123,10 +123,6 @@ export const DetailView: React.FC<DetailViewProps> = ({ currentItem, onMessageUp
                 </View>
               )}
             </View>
-
-            <TouchableOpacity style={styles.detailButton}>
-              <Text style={styles.detailButtonText}>Contratar</Text>
-            </TouchableOpacity>
           </>
         ) : currentItem && currentItem.type === 'message' ? (
           /* Message Detail */
@@ -244,6 +240,15 @@ export const DetailView: React.FC<DetailViewProps> = ({ currentItem, onMessageUp
           </View>
         </View>
       )}
+
+      {/* Fixed Contratar Button - Only for products */}
+      {!isMessageType && currentItem && (
+        <View style={styles.productButtonSection}>
+          <TouchableOpacity style={styles.detailButton}>
+            <Text style={styles.detailButtonText}>Contratar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -264,14 +269,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     marginHorizontal: 12,
     marginTop: 12,
-    marginBottom: 16,
-    padding: 16,
+    padding: 5,
     borderRadius: 12,
   },
   detailHeader: {
     backgroundColor: '#ffffff',
     marginHorizontal: 12,
-    marginBottom: 16,
     padding: 16,
     borderRadius: 12,
   },
@@ -331,7 +334,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     marginHorizontal: 12,
     marginBottom: 16,
-    padding: 16,
+    padding: 10,
     borderRadius: 0,
   },
   detailPriceInfo: {
@@ -443,6 +446,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#111827',
     marginBottom: 12,
+  },
+  productButtonSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+    paddingTop: 8,
+    backgroundColor: 'transparent',
   },
   commentInputSection: {
     position: 'absolute',
