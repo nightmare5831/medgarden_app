@@ -132,12 +132,14 @@ export const DetailView: React.FC<DetailViewProps> = ({ currentItem, onMessageUp
           /* Message Detail */
           <>
             {/* Owner Info with Interaction Buttons */}
-            <View style={styles.ownerInfoWithInteraction}>
-              <OwnerInfo
-                ownerName={currentItem.ownerName}
-                ownerRole={currentItem.ownerRole}
-                variant="detail"
-              />
+            <View style={styles.messageOwnerInfoSection}>
+              <View style={styles.ownerInfoWrapper}>
+                <OwnerInfo
+                  ownerName={currentItem.ownerName}
+                  ownerRole={currentItem.ownerRole}
+                  variant="detail"
+                />
+              </View>
 
               {/* Interaction Buttons on Right */}
               <View style={styles.interactionBar}>
@@ -165,8 +167,9 @@ export const DetailView: React.FC<DetailViewProps> = ({ currentItem, onMessageUp
                 </View>
               </View>
             </View>
+
             {/* Message Content */}
-            <View style={styles.detailSection}>
+            <View style={styles.messageContentSection}>
               <Text style={styles.detailDescription}>{currentItem.content}</Text>
             </View>
 
@@ -391,20 +394,22 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  messageOwnerInfo: {
-    paddingTop: 5,
-    marginTop: 5,
-  },
-  ownerInfoWithInteraction: {
+  messageOwnerInfoSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    marginHorizontal: 12,
-    marginTop: 12,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  ownerInfoWrapper: {
+    flex: 1,
+    marginRight: 12,
+  },
+  messageContentSection: {
+    marginTop:5,
+    marginHorizontal: 16,
     marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
   },
   messageContentCard: {
     backgroundColor: '#f3f4f6',
@@ -417,6 +422,8 @@ const styles = StyleSheet.create({
   interactionBar: {
     flexDirection: 'row',
     gap: 16,
+    alignItems: 'center',
+    flexShrink: 0,
   },
   interactionButton: {
     flexDirection: 'row',

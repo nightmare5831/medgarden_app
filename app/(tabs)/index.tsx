@@ -108,16 +108,14 @@ export default function BuyerDashboard() {
           </View>
         )}
 
-        {/* Product/Message Display Area - Hide when detail is shown */}
-        {!showDetail && (
-          <ProductDisplay
-            currentItem={currentItem}
-            isLoading={isLoading}
-            selectedImageIndex={selectedImageIndex}
-            showDetail={showDetail}
-            onThumbnailClick={handleThumbnailClick}
-          />
-        )}
+        {/* Product/Message Display Area - Always visible */}
+        <ProductDisplay
+          currentItem={currentItem}
+          isLoading={isLoading}
+          selectedImageIndex={selectedImageIndex}
+          showDetail={showDetail}
+          onThumbnailClick={handleThumbnailClick}
+        />
 
         {/* Navigation Controls Overlay */}
         <NavigationControls

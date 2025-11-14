@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '../../data/products';
 import { Message } from '../../services/api';
@@ -41,71 +41,61 @@ export const ProductDisplay: React.FC<ProductDisplayProps> = ({
   }
 
   if (currentItem.type === 'product') {
+    // Check if product has images
+    const hasImages = currentItem.images && currentItem.images.length > 0;
+    const displayImages = hasImages ? currentItem.images : [null, null, null]; // 3 placeholder slots
+
+    // Ensure selectedImageIndex is valid
+    const validImageIndex = hasImages && selectedImageIndex < currentItem.images.length
+      ? selectedImageIndex
+      : 0;
     return (
       <View style={styles.productDisplay}>
         <Image
-          source={{ uri: currentItem.images[selectedImageIndex] || currentItem.thumbnail }}
+          source={
+            hasImages && currentItem.images[validImageIndex]
+              ? { uri: currentItem.images[validImageIndex] }
+              : require('../../assets/pbg.png')
+          }
           style={styles.productImage}
           resizeMode="contain"
+          onError={(error) => console.log('Image load error:', error.nativeEvent.error)}
         />
-        {/* Image Thumbnails */}
-        {showDetail && currentItem.images && currentItem.images.length > 0 && (
+        {/* Image Thumbnails - Always show 3 thumbnails when detail is shown */}
+        {showDetail && (
           <View style={styles.thumbnailsOverlay}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {currentItem.images.map((img, idx) => (
+            <View style={styles.thumbnailContainer}>
+              {displayImages.slice(0, 3).map((img, idx) => (
                 <TouchableOpacity
                   key={idx}
                   style={[
                     styles.thumbnailButton,
-                    idx === selectedImageIndex && styles.thumbnailButtonActive
+                    idx === validImageIndex && styles.thumbnailButtonActive
                   ]}
                   onPress={() => onThumbnailClick(idx)}
                 >
                   <Image
-                    source={{ uri: img }}
+                    source={img ? { uri: img } : require('../../assets/pbg.png')}
                     style={styles.thumbnailImage}
                     resizeMode="cover"
                   />
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
           </View>
         )}
       </View>
     );
   }
 
-  // Message display
+  // Message display - show placeholder image
   return (
     <View style={styles.productDisplay}>
-      <View style={styles.messageCard}>
-        <View style={styles.messageHeader}>
-          <View style={styles.messageAvatar}>
-            <Text style={styles.messageAvatarText}>
-              {currentItem.ownerName?.substring(0, 2).toUpperCase() || 'U'}
-            </Text>
-          </View>
-          <View style={styles.messageAuthor}>
-            <Text style={styles.messageName}>{currentItem.ownerName}</Text>
-            <Text style={styles.messageRole}>{currentItem.ownerRole}</Text>
-          </View>
-        </View>
-        <Text style={styles.messageContent}>{currentItem.content}</Text>
-        <View style={styles.messageStats}>
-          <View style={styles.messageStat}>
-            <Ionicons name="chatbubble-outline" size={16} color="#fff" />
-            <Text style={styles.messageStatText}>{currentItem.comments?.length || 0}</Text>
-          </View>
-          <View style={styles.messageStat}>
-            <Ionicons name="heart" size={16} color="#ef4444" />
-            <Text style={styles.messageStatText}>{currentItem.favorite?.length || 0}</Text>
-          </View>
-          <View style={styles.messageStat}>
-            <Ionicons name="thumbs-up" size={16} color="#10b981" />
-            <Text style={styles.messageStatText}>{currentItem.good?.length || 0}</Text>
-          </View>
-        </View>
-      </View>
+      <Image
+        source={require('../../assets/pbg.png')}
+        style={styles.productImage}
+        resizeMode="contain"
+      />
     </View>
   );
 };
@@ -123,10 +113,18 @@ const styles = StyleSheet.create({
   },
   thumbnailsOverlay: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 70,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  thumbnailContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
   },
   thumbnailButton: {
     width: 70,
@@ -136,9 +134,11 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255, 255, 255, 0.5)',
     overflow: 'hidden',
+    backgroundColor: '#fff',
   },
   thumbnailButtonActive: {
     borderColor: '#6fee5f',
+    borderWidth: 4,
   },
   thumbnailImage: {
     width: '100%',
@@ -152,71 +152,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     marginTop: 12,
-  },
-  messageCard: {
-    width: '85%',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  messageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  messageAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  messageAvatarText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  messageAuthor: {
-    flex: 1,
-  },
-  messageName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  messageRole: {
-    fontSize: 12,
-    color: '#6b7280',
-    textTransform: 'uppercase',
-  },
-  messageContent: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  messageStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  messageStat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  messageStatText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
   },
 });
