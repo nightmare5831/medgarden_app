@@ -8,6 +8,7 @@ interface BottomSectionProps {
   onCategoryClick: (categoryKey: string) => void;
   currentUser: User | null;
   getUserInitials: () => string;
+  onPostarClick: () => void;
 }
 
 export const BottomSection: React.FC<BottomSectionProps> = ({
@@ -15,6 +16,7 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
   onCategoryClick,
   currentUser,
   getUserInitials,
+  onPostarClick,
 }) => {
   return (
     <View style={styles.bottomContent}>
@@ -130,7 +132,7 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
 
         {/* Bottom Row - Postar Button */}
         <View style={styles.rightBottomSection}>
-          <TouchableOpacity style={styles.postarButton}>
+          <TouchableOpacity style={styles.postarButton} onPress={onPostarClick}>
             <View style={styles.postarIconCircle}>
               <Image
                 source={require('../../assets/post.png')}

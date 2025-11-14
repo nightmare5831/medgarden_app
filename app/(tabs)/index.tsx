@@ -4,8 +4,14 @@ import {
   Text,
   StyleSheet,
   ImageBackground,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../store/useAppStore';
 import { OwnerInfo } from '../../components/home/OwnerInfo';
 import { ProductDisplay } from '../../components/home/ProductDisplay';
@@ -13,6 +19,7 @@ import { NavigationControls } from '../../components/home/NavigationControls';
 import { BottomSection } from '../../components/home/BottomSection';
 import { DetailView } from '../../components/home/DetailView';
 import { messagesChannel } from '../../services/pusher';
+import { messageApi } from '../../services/api';
 
 const GOLDEN_RATIO = 0.618;
 
@@ -35,11 +42,15 @@ export default function BuyerDashboard() {
     filterByCategory,
     nextProduct,
     previousProduct,
+    authToken,
   } = useAppStore();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [newMessageText, setNewMessageText] = useState('');
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
   // Load products and messages on mount
   useEffect(() => {
@@ -103,6 +114,25 @@ export default function BuyerDashboard() {
     return currentUser.name.substring(0, 2).toUpperCase();
   };
 
+  const handleCreateMessage = async () => {
+    if (newMessageText.trim() && authToken) {
+      try {
+        await messageApi.create(authToken, newMessageText);
+        setNewMessageText('');
+        setShowNewMessage(false);
+        Alert.alert('Sucesso', 'Mensagem criada com sucesso!');
+        loadMessages(); // Reload messages
+      } catch (error) {
+        console.error('Failed to create message:', error);
+        Alert.alert('Erro', 'Não foi possível criar a mensagem');
+      }
+    }
+  };
+
+  const handlePostarClick = () => {
+    setShowNewMessage(true);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* TOP SECTION - 61.8% (Product Display Area) */}
@@ -148,6 +178,7 @@ export default function BuyerDashboard() {
             onCategoryClick={handleCategoryClick}
             currentUser={currentUser}
             getUserInitials={getUserInitials}
+            onPostarClick={handlePostarClick}
           />
         ) : (
           <DetailView currentItem={currentItem} />
@@ -160,6 +191,70 @@ export default function BuyerDashboard() {
           <Text style={styles.counterText}>
             {currentProductIndex + 1} / {filteredProducts.length}
           </Text>
+        </View>
+      )}
+
+      {/* Create Message Modal */}
+      {showNewMessage && (
+        <View style={styles.newMessageContainer}>
+          <View style={styles.newMessageHeader}>
+            <Text style={styles.newMessageTitle}>Nova Mensagem</Text>
+            <TouchableOpacity onPress={() => setShowNewMessage(false)}>
+              <Ionicons name="close" size={24} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+
+          <TextInput
+            style={styles.newMessageInput}
+            placeholder="Digite sua mensagem..."
+            value={newMessageText}
+            onChangeText={setNewMessageText}
+            multiline
+            maxLength={300}
+            autoFocus
+          />
+
+          {/* Image Preview */}
+          {selectedImages.length > 0 && (
+            <View style={styles.imagePreviewContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {selectedImages.map((uri, index) => (
+                  <View key={index} style={styles.imagePreviewWrapper}>
+                    <View style={styles.imagePreview}>
+                      <Ionicons name="image" size={40} color="#6b7280" />
+                    </View>
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => setSelectedImages(selectedImages.filter((_, i) => i !== index))}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Action Buttons Row */}
+          <View style={styles.messageActionsRow}>
+            <TouchableOpacity
+              style={styles.attachButton}
+              onPress={() => {
+                Alert.alert('Adicionar Foto', 'Funcionalidade de upload de fotos será implementada em breve!');
+                setSelectedImages([...selectedImages, 'placeholder']);
+              }}
+            >
+              <Ionicons name="camera" size={18} color="#3b82f6" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.postButton, !newMessageText.trim() && styles.postButtonDisabled]}
+              onPress={handleCreateMessage}
+              disabled={!newMessageText.trim()}
+            >
+              <Text style={styles.postButtonText}>Publicar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -198,5 +293,98 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#fff',
+  },
+  newMessageContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: '5%',
+    right: '5%',
+    width: '90%',
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+    maxHeight: '70%',
+  },
+  newMessageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  newMessageTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  newMessageInput: {
+    backgroundColor: '#f3f4f6',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 14,
+    minHeight: 60,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  imagePreviewContainer: {
+    marginBottom: 12,
+  },
+  imagePreviewWrapper: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  imagePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+  },
+  messageActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  attachButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#dbeafe',
+  },
+  postButton: {
+    flex: 1,
+    backgroundColor: '#2563eb',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  postButtonDisabled: {
+    backgroundColor: '#d1d5db',
+  },
+  postButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
