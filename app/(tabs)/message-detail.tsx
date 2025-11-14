@@ -59,9 +59,25 @@ export default function MessageDetail() {
       if (found) {
         setMessage(found);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load message:', error);
-      if (showLoading) {
+
+      // Check if it's a 401 error (unauthorized)
+      if (error.status === 401) {
+        Alert.alert(
+          'Sessão expirada',
+          'Sua sessão expirou. Por favor, faça login novamente.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                useAppStore.getState().logout();
+                router.replace('/auth/login');
+              }
+            }
+          ]
+        );
+      } else if (showLoading) {
         Alert.alert('Erro', 'Não foi possível carregar a mensagem');
       }
     } finally {

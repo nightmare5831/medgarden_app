@@ -26,7 +26,6 @@ export default function Forum() {
   const [activeTab, setActiveTab] = useState<'all' | 'favorites' | 'mine'>('all');
   const [selectMode, setSelectMode] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<string | number>>(new Set());
-  const [isPrivate, setIsPrivate] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
 
   useEffect(() => {
@@ -73,9 +72,25 @@ export default function Forum() {
       if (showLoading) setLoading(true);
       const data = await messageApi.getAll(authToken);
       setMessages(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load messages:', error);
-      if (showLoading) {
+
+      // Check if it's a 401 error (unauthorized)
+      if (error.status === 401) {
+        Alert.alert(
+          'Sessão expirada',
+          'Sua sessão expirou. Por favor, faça login novamente.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                useAppStore.getState().logout();
+                router.replace('/auth/login');
+              }
+            }
+          ]
+        );
+      } else if (showLoading) {
         Alert.alert('Erro', 'Não foi possível carregar as mensagens');
       }
     } finally {
@@ -84,12 +99,7 @@ export default function Forum() {
   };
 
   const handleBack = () => {
-    // Navigate based on user role
-    if (currentUser?.role === 'seller') {
-      router.push('/(tabs)/seller-dashboard');
-    } else {
-      router.push('/(tabs)');
-    }
+    router.push('/(tabs)');
   };
 
   const handleCreateMessage = async () => {
@@ -179,17 +189,15 @@ export default function Forum() {
           <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Fórum</Text>
-        {activeTab === 'mine' && !selectMode && (
-          <TouchableOpacity style={styles.backButton} onPress={() => setSelectMode(true)}>
-            <Ionicons name="trash-outline" size={24} color="#ef4444" />
-          </TouchableOpacity>
-        )}
-        {activeTab === 'mine' && selectMode && (
-          <TouchableOpacity style={styles.backButton} onPress={() => { setSelectMode(false); setSelectedMessages(new Set()); }}>
-            <Ionicons name="close" size={24} color="#111827" />
-          </TouchableOpacity>
-        )}
-        {activeTab !== 'mine' && <View style={styles.backButton} />}
+        <View style={styles.userAvatarContainer}>
+          {currentUser && (
+            <View style={styles.userAvatar}>
+              <Text style={styles.userAvatarText}>
+                {currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Search Bar */}
@@ -213,40 +221,25 @@ export default function Forum() {
 
       {/* Tabs */}
       <View style={styles.tabsWrapper}>
-        <View style={styles.tabsRow}>
-          <View style={styles.tabsContainer}>
-            <TouchableOpacity onPress={() => setActiveTab('all')} style={styles.tabItem}>
-              <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>Todas</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveTab('favorites')} style={styles.tabItem}>
-              <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>Favoritas</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveTab('mine')} style={styles.tabItem}>
-              <Text style={[styles.tabText, activeTab === 'mine' && styles.activeTabText]}>Minhas</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.tabIndicatorLine} />
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity onPress={() => setActiveTab('all')} style={styles.tabItem}>
+            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>Todas</Text>
+            {activeTab === 'all' && <View style={styles.tabIndicatorLine} />}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveTab('favorites')} style={styles.tabItem}>
+            <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>Favoritas</Text>
+            {activeTab === 'favorites' && <View style={styles.tabIndicatorLine} />}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setActiveTab('mine')} style={styles.tabItem}>
+            <Text style={[styles.tabText, activeTab === 'mine' && styles.activeTabText]}>Minhas postagens</Text>
+            {activeTab === 'mine' && <View style={styles.tabIndicatorLine} />}
+          </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* User Info Banner */}
-        <View style={styles.userBanner}>
-          <View style={styles.userBannerContent}>
-            <Ionicons name="people" size={24} color="#2563eb" />
-            <View style={styles.userBannerText}>
-              <Text style={styles.userBannerTitle}>Fórum da Comunidade</Text>
-              <Text style={styles.userBannerSubtitle}>
-                Compartilhe ideias e tire dúvidas
-              </Text>
-            </View>
-          </View>
-        </View>
-
         {/* Forum Posts List */}
         <View style={styles.postsContainer}>
-          <Text style={styles.sectionTitle}>Discussões Recentes</Text>
-
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#2563eb" />
@@ -310,10 +303,8 @@ export default function Forum() {
                   <View style={styles.postHeaderInfo}>
                     <Text style={styles.postAuthor}>{message.ownerName}</Text>
                     <View style={styles.postMeta}>
-                      <View style={[styles.roleBadge, message.ownerRole === 'seller' ? styles.sellerBadge : styles.buyerBadge]}>
-                        <Text style={styles.roleBadgeText}>
-                          {message.ownerRole === 'seller' ? 'Profissional' : 'Paciente'}
-                        </Text>
+                      <View style={styles.roleBadge}>
+                        <Text style={styles.roleBadgeText}>{message.ownerRole}</Text>
                       </View>
                       <Text style={styles.postTime}>• {message.timestamp}</Text>
                     </View>
@@ -382,29 +373,13 @@ export default function Forum() {
             </TouchableOpacity>
           </View>
 
-          {/* Privacy Toggle */}
-          <View style={styles.privacyContainer}>
-            <View style={styles.privacyInfo}>
-              <Ionicons name={isPrivate ? "lock-closed" : "earth"} size={20} color={isPrivate ? "#ef4444" : "#10b981"} />
-              <Text style={styles.privacyText}>
-                {isPrivate ? "Mensagem Privada" : "Mensagem Pública"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.privacyToggle, isPrivate && styles.privacyToggleActive]}
-              onPress={() => setIsPrivate(!isPrivate)}
-            >
-              <View style={[styles.privacyToggleThumb, isPrivate && styles.privacyToggleThumbActive]} />
-            </TouchableOpacity>
-          </View>
-
           <TextInput
             style={styles.newMessageInput}
             placeholder="Digite sua mensagem..."
             value={newMessageText}
             onChangeText={setNewMessageText}
             multiline
-            maxLength={500}
+            maxLength={300}
             autoFocus
           />
 
@@ -435,11 +410,10 @@ export default function Forum() {
               style={styles.attachButton}
               onPress={() => {
                 Alert.alert('Adicionar Foto', 'Funcionalidade de upload de fotos será implementada em breve!');
-                // TODO: Implement image picker
                 setSelectedImages([...selectedImages, 'placeholder']);
               }}
             >
-              <Ionicons name="camera" size={24} color="#3b82f6" />
+              <Ionicons name="camera" size={18} color="#3b82f6" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -487,6 +461,30 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#111827',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    zIndex: -1,
+  },
+  userAvatarContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#3b82f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userAvatarText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   searchContainer: {
     backgroundColor: '#ffffff',
@@ -511,6 +509,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
     paddingTop: 12,
+    paddingBottom: 0,
   },
   tabsRow: {
     alignSelf: 'flex-start',
@@ -518,22 +517,27 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     gap: 24,
-    paddingBottom: 8,
   },
   tabItem: {
+    paddingBottom: 12,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '500',
     color: '#6b7280',
+    marginBottom: 8,
   },
   activeTabText: {
-    color: '#2563eb',
+    color: '#000',
     fontWeight: '600',
   },
   tabIndicatorLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     height: 2,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#1e40af',
   },
   userBanner: {
     backgroundColor: '#eff6ff',
@@ -622,16 +626,12 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
     marginRight: 8,
-  },
-  sellerBadge: {
-    backgroundColor: '#dbeafe',
-  },
-  buyerBadge: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#6fee5f',
   },
   roleBadgeText: {
     fontSize: 11,
     fontWeight: '600',
+    color: '#065f46',
   },
   postTime: {
     fontSize: 12,
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    padding: 20,
+    padding: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -771,10 +771,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 15,
   },
   newMessageTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#111827',
   },
@@ -782,23 +782,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     borderRadius: 12,
     padding: 16,
-    fontSize: 15,
-    minHeight: 120,
+    fontSize: 14,
+    minHeight: 60,
     textAlignVertical: 'top',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   postButton: {
     flex: 1,
     backgroundColor: '#2563eb',
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 8,
+    paddingVertical: 10,
     alignItems: 'center',
   },
   postButtonDisabled: {
     backgroundColor: '#d1d5db',
   },
   postButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
   },
@@ -876,13 +876,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   attachButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     backgroundColor: '#eff6ff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#dbeafe',
   },
 });
