@@ -150,7 +150,7 @@ export default function Register() {
                 onPress={() => setRole('patient')}
               >
                 <Image
-                  source={require('../../assets/pacient.png')}
+                  source={require('../../assets/category/pacient.png')}
                   style={styles.roleIconImage}
                   resizeMode="contain"
                 />
@@ -164,7 +164,7 @@ export default function Register() {
                 onPress={() => setRole('professional')}
               >
                 <Image
-                  source={require('../../assets/profesional.png')}
+                  source={require('../../assets/category/profesional.png')}
                   style={styles.roleIconImage}
                   resizeMode="contain"
                 />
@@ -178,7 +178,7 @@ export default function Register() {
                 onPress={() => setRole('association')}
               >
                 <Image
-                  source={require('../../assets/association.png')}
+                  source={require('../../assets/category/association.png')}
                   style={styles.roleIconImage}
                   resizeMode="contain"
                 />
@@ -192,7 +192,7 @@ export default function Register() {
                 onPress={() => setRole('store')}
               >
                 <Image
-                  source={require('../../assets/products.png')}
+                  source={require('../../assets/category/products.png')}
                   style={styles.roleIconImage}
                   resizeMode="contain"
                 />

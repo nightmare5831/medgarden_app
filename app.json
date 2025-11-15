@@ -18,9 +18,9 @@
       "bundleIdentifier": "com.yourcompany.medgarden"
     },
     "android": {
-      "icon": "./assets/icon.png",
+      "icon": "./assets/apk.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/apk.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.yourcompany.medgardenshop"

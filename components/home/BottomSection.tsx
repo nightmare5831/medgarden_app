@@ -32,7 +32,7 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
             onPress={() => onCategoryClick('profissionais')}
           >
             <Image
-              source={require('../../assets/profesional.png')}
+              source={require('../../assets/category/profesional.png')}
               style={styles.categoryImage}
               resizeMode="contain"
             />
@@ -49,7 +49,7 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
             onPress={() => onCategoryClick('pacientes')}
           >
             <Image
-              source={require('../../assets/pacient.png')}
+              source={require('../../assets/category/pacient.png')}
               style={styles.categoryImage}
               resizeMode="contain"
             />
@@ -69,7 +69,7 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
             onPress={() => onCategoryClick('associacoes')}
           >
             <Image
-              source={require('../../assets/association.png')}
+              source={require('../../assets/category/association.png')}
               style={styles.categoryImage}
               resizeMode="contain"
             />
@@ -86,7 +86,7 @@ export const BottomSection: React.FC<BottomSectionProps> = ({
             onPress={() => onCategoryClick('produtos')}
           >
             <Image
-              source={require('../../assets/products.png')}
+              source={require('../../assets/category/products.png')}
               style={styles.categoryImage}
               resizeMode="contain"
             />
